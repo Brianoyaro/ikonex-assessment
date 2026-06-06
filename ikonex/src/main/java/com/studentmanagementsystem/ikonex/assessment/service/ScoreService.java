@@ -149,7 +149,7 @@ public class ScoreService {
                     .orElseThrow(() -> new RuntimeException("ClassSubject not found"));
 
             AtomicReference<Double> classSubjectTotal = new AtomicReference<>(0.0);
-            classSubject.getSubject().getStudentScores().forEach(score -> {
+            classSubject.getStudentScores().forEach(score -> {
                 classSubjectTotal.updateAndGet(v -> v + score.getStudentScore()); //We should add a check to only filter scores in the current year to prevent backtracked data which will return false averages
             });
             int classStreamTotalStudents = classSubject.getClassStream().getStudentList().size();

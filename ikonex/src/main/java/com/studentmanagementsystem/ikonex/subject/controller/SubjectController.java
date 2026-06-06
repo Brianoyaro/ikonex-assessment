@@ -1,8 +1,6 @@
 package com.studentmanagementsystem.ikonex.subject.controller;
 
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectPosition;
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectRequest;
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
+import com.studentmanagementsystem.ikonex.subject.DTO.*;
 import com.studentmanagementsystem.ikonex.subject.service.SubjectService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +33,7 @@ public class SubjectController {
     }
     // Get one
     @GetMapping("/{id}")
-    private ResponseEntity<?> getSubject(@PathVariable Long id) {
+    public ResponseEntity<?> getSubject(@PathVariable Long id) {
         try {
             log.info("Getting subject with id {}", id);
             SubjectResponse response = service.getSubject(id);
@@ -50,10 +48,10 @@ public class SubjectController {
 
     // Get all
     @GetMapping
-    private ResponseEntity<?> getSubjects(@PathVariable Long id) {
+    public ResponseEntity<?> getSubjects(@PathVariable Long id) {
         try {
             log.info("Getting all subjects");
-            List<SubjectResponse> response = service.getAllSubjecs(id);
+            List<SubjectResponse> response = service.getAllSubjects();
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             log.error(e.getMessage());
@@ -64,7 +62,7 @@ public class SubjectController {
     }
     // update
     @PutMapping
-    private ResponseEntity<?> updateSubject(@PathVariable Long id, @RequestBody SubjectRequest request) {
+    public ResponseEntity<?> updateSubject(@PathVariable Long id, @RequestBody SubjectRequest request) {
         try {
             log.info("Updating subject with id {}", id);
             SubjectResponse response = service.updateSubject(id, request);
@@ -79,7 +77,7 @@ public class SubjectController {
 
     // delete
     @DeleteMapping("/{id}")
-    private ResponseEntity<?> deleteSubject(@PathVariable Long id) {
+    public ResponseEntity<?> deleteSubject(@PathVariable Long id) {
         try {
             log.info("Deleting subject with id {}", id);
             service.deleteSubject(id);
@@ -97,7 +95,7 @@ public class SubjectController {
 
     // get subject positions for a given stream
     @GetMapping("/position/{classStreamId}")
-    private ResponseEntity<?> getSubjectPosition(@PathVariable Long classStreamId) {
+    public ResponseEntity<?> getSubjectPosition(@PathVariable Long classStreamId) {
         try {
             log.info("Getting subject position with id {}", classStreamId);
             List<SubjectPosition> response = service.getClassSubjectPositions(classStreamId);
@@ -107,6 +105,69 @@ public class SubjectController {
             HashMap<String, Object> map = new HashMap<>();
             map.put("message", e.getMessage());
             return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // assign a subject to a class stream i.e. create a classSubject
+    @PostMapping("/assign-class")
+    public ResponseEntity<?> assignClassSubject(@RequestBody ClassSubjectRequest request) {
+        try {
+            log.info("assigning a subject to a class");
+            ClassSubjectResponse response = service.createClassSubject(request);
+            return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // get all classSubjects belonging to a classStream
+    @GetMapping("/class-stream/{id}")
+    public ResponseEntity<?> getClassSubjectsForAGivenStream(@PathVariable Long id) {
+        try {
+            log.info("Getting class subjects for class_stream with id {}", id);
+            List<ClassSubjectResponse> response = service.getAllClassSubjectsForAGivenStream(id);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        }  catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // get all classSubjects
+    @GetMapping("/class-stream/all")
+    public ResponseEntity<?> getClassSubjectsForAGivenStream() {
+        try {
+            log.info("Getting all class subjects");
+            List<ClassSubjectResponse> response = service.getAllClassSubjects();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        }  catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // delete a classSubject
+    @DeleteMapping("/stream/{id}")
+    public ResponseEntity<?> deleteClassSubject(@PathVariable Long id) {
+        try {
+            log.info("Deleting class subject with id {}", id);
+            service.deleteClassSubject(id);
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", "Subject with id " + id + " has been deleted");
+
+            return ResponseEntity.status(HttpStatus.OK).body(map);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return   ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
         }
     }
 }

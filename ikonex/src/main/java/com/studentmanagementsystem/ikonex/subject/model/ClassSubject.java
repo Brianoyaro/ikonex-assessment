@@ -1,11 +1,15 @@
 package com.studentmanagementsystem.ikonex.subject.model;
 
+import com.studentmanagementsystem.ikonex.assessment.model.Score;
 import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Data
@@ -34,4 +38,8 @@ public class ClassSubject {
     @ManyToOne
     @JoinColumn(name = "subject_id")
     private Subject subject;
+
+    @OneToOne(mappedBy ="classSubject", cascade = CascadeType.ALL)
+    @Builder.Default
+    private List<Score> studentScores = new ArrayList<>();
 }

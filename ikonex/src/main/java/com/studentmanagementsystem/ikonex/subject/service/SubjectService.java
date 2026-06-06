@@ -1,9 +1,8 @@
 package com.studentmanagementsystem.ikonex.subject.service;
 
+import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import com.studentmanagementsystem.ikonex.classStream.repository.ClassStreamRepo;
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectPosition;
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectRequest;
-import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
+import com.studentmanagementsystem.ikonex.subject.DTO.*;
 import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
 import com.studentmanagementsystem.ikonex.subject.model.Subject;
 import com.studentmanagementsystem.ikonex.subject.repository.ClassSubjectRepo;
@@ -39,16 +38,38 @@ public class SubjectService {
                     .build();
             final Subject savedSubject = subjectRepo.save(subject);
             log.info("Subject created with id {}", savedSubject.getId());
-            return mapper(savedSubject);
+            return subjectMapper(savedSubject);
         } catch  (Exception e) {
             log.error("Error while creating a new subject");
             throw e;
         }
     }
 
+    // create a class subject i.e. assign a subject to a class stream
+    public ClassSubjectResponse createClassSubject(ClassSubjectRequest classSubjectRequest) {
+        try {
+            log.info("Creating a new ClassSubject");
+            Subject subject = subjectRepo.findById(classSubjectRequest.getSubjectId())
+                    .orElseThrow(() -> new RuntimeException("Subject with ID " +  classSubjectRequest.getSubjectId() + "{} Not found."));
+            ClassStream classStream = classStreamRepo.findById(classSubjectRequest.getClassStreamId())
+                    .orElseThrow(() -> new RuntimeException("ClassStream with ID " +  classSubjectRequest.getSubjectId() + "{} Not found."));
+            // classStream and subject objects
+            ClassSubject classSubject =  ClassSubject.builder()
+                    .classStream(classStream)
+                    .subject(subject)
+                    .build();
+            final ClassSubject savedClassSubject = classSubjectRepo.save(classSubject);
+            log.info("classSubject created with id {}", savedClassSubject.getId());
+            //
+            return classSubjectMapper(savedClassSubject);
+        } catch   (Exception e) {
+            log.error("Error while creating a new ClassSubject");
+            throw e;
+        }
+    }
 
-    // mapper
-    private SubjectResponse mapper(Subject subject) {
+    // subject mapper
+    private SubjectResponse subjectMapper(Subject subject) {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
         return SubjectResponse.builder()
@@ -56,7 +77,22 @@ public class SubjectService {
                 .name(subject.getName())
                 .description(subject.getDescription())
                 .createdAt(LocalDateTime.parse(subject.getCreatedAt().format(formatter)))
-                .studentScores(subject.getStudentScores())
+                //.studentScores(subject.getStudentScores())
+                .build();
+    }
+
+    // classSubject mapper
+    private ClassSubjectResponse classSubjectMapper(ClassSubject classSubject) {
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+        return ClassSubjectResponse.builder()
+                .id(classSubject.getId())
+                .code(classSubject.getSubject().getCode())
+                .name(classSubject.getSubject().getName())
+                .description(classSubject.getSubject().getDescription())
+                .createdAt(LocalDateTime.parse(classSubject.getSubject().getCreatedAt().format(formatter)))
+                .studentScores(classSubject.getStudentScores())
+                .className(classSubject.getClassStream().getName())
                 .build();
     }
 
@@ -66,7 +102,7 @@ public class SubjectService {
             log.info("Getting subject with id {}", id);
             Subject subject = subjectRepo.findById(id)
                     .orElseThrow(() -> new RuntimeException("Subject with id " + id + " not found"));
-            return mapper(subject);
+            return subjectMapper(subject);
         } catch   (Exception e) {
             log.error("Error while getting subject");
             throw e;
@@ -74,12 +110,36 @@ public class SubjectService {
     }
 
     // Get all
-    public List<SubjectResponse> getAllSubjecs(Long id) {
+    public List<SubjectResponse> getAllSubjects() {
         try {
-            log.info("Getting all subjects with id {}", id);
+            log.info("Getting all subjects");
             return subjectRepo.findAll()
                     .stream()
-                    .map(this::mapper)
+                    .map(this::subjectMapper)
+                    .collect(Collectors.toList());
+        } catch  (Exception e) {
+            log.error("Error while getting all subjects");
+            throw e;
+        }
+    }
+    public List<ClassSubjectResponse> getAllClassSubjectsForAGivenStream(Long streamId) {
+        try {
+            log.info("Getting all class subjects for stream with id {}", streamId);
+            return classSubjectRepo.findByClassStreamId(streamId)
+                    .stream()
+                    .map(this::classSubjectMapper)
+                    .collect(Collectors.toList());
+        } catch  (Exception e) {
+            log.error("Error while getting all subjects");
+            throw e;
+        }
+    }
+    public List<ClassSubjectResponse> getAllClassSubjects() {
+        try {
+            log.info("Getting all class subjects");
+            return classSubjectRepo.findAll()
+                    .stream()
+                    .map(this::classSubjectMapper)
                     .collect(Collectors.toList());
         } catch  (Exception e) {
             log.error("Error while getting all subjects");
@@ -108,7 +168,7 @@ public class SubjectService {
 
             log.info("Subject updated with id {}", savedSubject.getId());
 
-            return mapper(savedSubject);
+            return subjectMapper(savedSubject);
         } catch  (Exception e) {
             log.error("Error while updating subject");
             throw e;
@@ -125,16 +185,25 @@ public class SubjectService {
             throw e;
         }
     }
+    public void deleteClassSubject(Long id) {
+        try {
+            log.info("Deleting  class_subject with id {}", id);
+            classSubjectRepo.deleteById(id);
+        } catch   (Exception e) {
+            log.error("Error while deleting class subject");
+            throw e;
+        }
+    }
 
     // get classSubject positions for a given stream
     public List<SubjectPosition> getClassSubjectPositions(Long classId) {
-        List<ClassSubject> classSubjects = classSubjectRepo.findByClassId(classId);
+        List<ClassSubject> classSubjects = classSubjectRepo.findByClassStreamId(classId);
 
         List<SubjectPosition> subjectPositions = new ArrayList<>();
         classSubjects.forEach(classSubject -> {
             // get total
             AtomicReference<Double> total = new AtomicReference<>(0.0);
-            classSubject.getSubject().getStudentScores().forEach(score -> {
+            classSubject.getStudentScores().forEach(score -> {
                 total.updateAndGet(v -> v + score.getStudentScore());
             });
             // get average

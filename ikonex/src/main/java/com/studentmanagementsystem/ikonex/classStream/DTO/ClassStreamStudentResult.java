@@ -9,7 +9,6 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class ClassStreamStudentResult extends StudentResult {
     private Integer studentPosition;
 }

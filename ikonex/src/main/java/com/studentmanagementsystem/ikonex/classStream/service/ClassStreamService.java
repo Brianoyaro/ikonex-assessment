@@ -136,7 +136,7 @@ public class ClassStreamService {
         classStreams.forEach(classStream -> {
             AtomicReference<Double> total = new AtomicReference<>(0.0);
             classStream.getClassSubjects().forEach(classSubject -> {
-                classSubject.getSubject().getStudentScores().forEach(score -> {
+                classSubject.getStudentScores().forEach(score -> {
                     total.updateAndGet(v -> v + score.getStudentScore());
                 });
             });

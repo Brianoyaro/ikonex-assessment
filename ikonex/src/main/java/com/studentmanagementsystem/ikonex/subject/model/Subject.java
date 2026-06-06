@@ -37,9 +37,9 @@ public class Subject {
     private LocalDateTime createdAt;
 
 
-    @OneToOne(mappedBy ="subject", cascade = CascadeType.ALL)
-    @Builder.Default
-    private List<Score> studentScores = new ArrayList<>();
+//    @OneToOne(mappedBy ="subject", cascade = CascadeType.ALL)
+//    @Builder.Default
+//    private List<Score> studentScores = new ArrayList<>();
 
     @OneToMany(mappedBy = "subject")
     private List<ClassSubject> classSubjects; // I do not see a need for returning this in the response object
