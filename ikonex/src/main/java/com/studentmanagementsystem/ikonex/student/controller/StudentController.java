@@ -1,7 +1,6 @@
 package com.studentmanagementsystem.ikonex.student.controller;
 
-import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
-import com.studentmanagementsystem.ikonex.report.DTO.StudentResult;
+import com.studentmanagementsystem.ikonex.student.DTO.StudentResult;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentRequest;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentResponse;
 import com.studentmanagementsystem.ikonex.student.service.StudentService;

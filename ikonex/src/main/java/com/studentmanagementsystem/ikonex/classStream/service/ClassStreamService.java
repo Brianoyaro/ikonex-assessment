@@ -2,8 +2,11 @@ package com.studentmanagementsystem.ikonex.classStream.service;
 
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
+import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamStudentResult;
 import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import com.studentmanagementsystem.ikonex.classStream.repository.ClassStreamRepo;
+import com.studentmanagementsystem.ikonex.student.DTO.StudentResult;
+import com.studentmanagementsystem.ikonex.student.service.StudentService;
 import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +25,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class ClassStreamService {
-    private ClassStreamRepo repository;
+    private final ClassStreamRepo repository;
+    private final StudentService studentService;
 
     // Create
     public ClassStreamResponse createClassStream(ClassStreamRequest request) {
@@ -154,5 +158,26 @@ public class ClassStreamService {
             classPositions.get(i).setClassPosition(i + 1);
         }
         return classPositions;
+    }
+
+    // get class report sorted on student's average mark
+    public List<ClassStreamStudentResult> getClassReport(Long classStreamId) {
+        ClassStream classStream = repository.findById(classStreamId)
+                .orElseThrow(() -> new RuntimeException("ClassStream with id: " + classStreamId + " not found"));
+        List<ClassStreamStudentResult> classStreamStudentResult = new ArrayList<>();
+        //
+        classStream.getStudentList().forEach(student -> {
+            // get the student report using student service
+            StudentResult studentResult = studentService.getStudentResults(student.getId());
+            classStreamStudentResult.add((ClassStreamStudentResult) studentResult);
+        });
+
+        // sort the on student overallAverage and set their position
+        classStreamStudentResult.sort(Comparator.comparingDouble(StudentResult::getOverallAverage));
+        for (int i = 0; i <= classStreamStudentResult.size() - 1; i++) {
+            classStreamStudentResult.get(i).setStudentPosition(i + 1);
+        }
+
+        return classStreamStudentResult;
     }
 }

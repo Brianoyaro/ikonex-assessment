@@ -2,6 +2,7 @@ package com.studentmanagementsystem.ikonex.classStream.controller;
 
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
+import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamStudentResult;
 import com.studentmanagementsystem.ikonex.classStream.service.ClassStreamService;
 import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
 import lombok.RequiredArgsConstructor;
@@ -104,6 +105,21 @@ public class ClassStreamController {
         try {
             log.info("getClassStreamPositions called");
             List<ClassPosition> response = service.getOverallClassPositions();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("message",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // get classStream report: all students + their marks/data including their positions
+    @GetMapping("/{classStreamId}/report")
+    public ResponseEntity<?> getClassStreamReport(@PathVariable Long classStreamId) {
+        try {
+            log.info("getClassStreamReport called");
+            List<ClassStreamStudentResult> response = service.getClassReport(classStreamId);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             log.error(e.getMessage());
