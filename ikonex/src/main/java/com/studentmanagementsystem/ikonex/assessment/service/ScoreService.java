@@ -9,12 +9,14 @@ import com.studentmanagementsystem.ikonex.assessment.repository.ScoreRepo;
 import com.studentmanagementsystem.ikonex.student.model.Student;
 import com.studentmanagementsystem.ikonex.student.repository.StudentRepo;
 import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
+import com.studentmanagementsystem.ikonex.subject.model.Subject;
 import com.studentmanagementsystem.ikonex.subject.repository.ClassSubjectRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -145,7 +147,15 @@ public class ScoreService {
             log.info("Inside getAverageClassSubjectScore method");
             ClassSubject classSubject = classSubjectRepo.findById(classSubjectId)
                     .orElseThrow(() -> new RuntimeException("ClassSubject not found"));
-            return scoreRepo.getAverageScoreForClasssubject(classSubject);
+
+            AtomicReference<Double> classSubjectTotal = new AtomicReference<>(0.0);
+            classSubject.getSubject().getStudentScores().forEach(score -> {
+                classSubjectTotal.updateAndGet(v -> v + score.getStudentScore()); //We should add a check to only filter scores in the current year to prevent backtracked data which will return false averages
+            });
+            int classStreamTotalStudents = classSubject.getClassStream().getStudentList().size();
+
+            return classSubjectTotal.get() / (double) classStreamTotalStudents;
+            //return scoreRepo.getAverageScoreForClasssubject(classSubject);
         } catch (Exception e) {
             log.error("Error in getAverageClassSubjectScore method");
             throw e;

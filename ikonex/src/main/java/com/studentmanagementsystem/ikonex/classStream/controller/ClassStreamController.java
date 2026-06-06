@@ -3,6 +3,7 @@ package com.studentmanagementsystem.ikonex.classStream.controller;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
 import com.studentmanagementsystem.ikonex.classStream.service.ClassStreamService;
+import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/streams")
+@RequestMapping("/api/class-streams")
 @RequiredArgsConstructor
 @Slf4j
 public class ClassStreamController {
@@ -89,6 +90,21 @@ public class ClassStreamController {
             HashMap<String,String> map = new HashMap<>();
             map.put("message","Class Stream has been deleted successfully");
             return ResponseEntity.status(HttpStatus.OK).body(map);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("message",e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // get overall classStream positions
+    @GetMapping("/positions")
+    public ResponseEntity<?> getClassStreamPositions() {
+        try {
+            log.info("getClassStreamPositions called");
+            List<ClassPosition> response = service.getOverallClassPositions();
+            return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
             log.error(e.getMessage());
             HashMap<String,Object> map = new HashMap<>();

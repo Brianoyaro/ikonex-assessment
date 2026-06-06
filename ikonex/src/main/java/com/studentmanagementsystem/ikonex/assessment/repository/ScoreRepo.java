@@ -8,6 +8,5 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.List;
 
 public interface ScoreRepo extends JpaRepository<Score, Long> {
-    public Double getAverageScoreForClasssubject(ClassSubject classSubject);
-
+    //public Double getAverageScoreForClasssubject(ClassSubject classSubject);
 }

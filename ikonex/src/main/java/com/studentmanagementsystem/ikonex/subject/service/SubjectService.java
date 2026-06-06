@@ -1,8 +1,12 @@
 package com.studentmanagementsystem.ikonex.subject.service;
 
+import com.studentmanagementsystem.ikonex.classStream.repository.ClassStreamRepo;
+import com.studentmanagementsystem.ikonex.subject.DTO.SubjectPosition;
 import com.studentmanagementsystem.ikonex.subject.DTO.SubjectRequest;
 import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
+import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
 import com.studentmanagementsystem.ikonex.subject.model.Subject;
+import com.studentmanagementsystem.ikonex.subject.repository.ClassSubjectRepo;
 import com.studentmanagementsystem.ikonex.subject.repository.SubjectRepo;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -10,14 +14,19 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class SubjectService {
-    private final SubjectRepo repo;
+    private final SubjectRepo subjectRepo;
+    private final ClassSubjectRepo classSubjectRepo;
+    private final ClassStreamRepo classStreamRepo;
 
     // create
     public SubjectResponse createSubject(SubjectRequest subjectRequest) {
@@ -28,7 +37,7 @@ public class SubjectService {
                     .description(subjectRequest.getDescription())
                     .code(subjectRequest.getCode())
                     .build();
-            final Subject savedSubject = repo.save(subject);
+            final Subject savedSubject = subjectRepo.save(subject);
             log.info("Subject created with id {}", savedSubject.getId());
             return mapper(savedSubject);
         } catch  (Exception e) {
@@ -55,7 +64,7 @@ public class SubjectService {
     public SubjectResponse getSubject(Long id) {
         try {
             log.info("Getting subject with id {}", id);
-            Subject subject = repo.findById(id)
+            Subject subject = subjectRepo.findById(id)
                     .orElseThrow(() -> new RuntimeException("Subject with id " + id + " not found"));
             return mapper(subject);
         } catch   (Exception e) {
@@ -68,7 +77,7 @@ public class SubjectService {
     public List<SubjectResponse> getAllSubjecs(Long id) {
         try {
             log.info("Getting all subjects with id {}", id);
-            return repo.findAll()
+            return subjectRepo.findAll()
                     .stream()
                     .map(this::mapper)
                     .collect(Collectors.toList());
@@ -82,7 +91,7 @@ public class SubjectService {
     public SubjectResponse updateSubject(Long id, SubjectRequest request) {
         try {
             log.info("Updating subject with id {}", id);
-            Subject subject = repo.findById(id)
+            Subject subject = subjectRepo.findById(id)
                     .orElseThrow(() -> new RuntimeException("Subject with id " + id + " not found"));
 
             if (request.getName() != null) {
@@ -95,7 +104,7 @@ public class SubjectService {
                 subject.setCode(request.getCode());
             }
 
-            Subject savedSubject = repo.save(subject);
+            Subject savedSubject = subjectRepo.save(subject);
 
             log.info("Subject updated with id {}", savedSubject.getId());
 
@@ -110,10 +119,41 @@ public class SubjectService {
     public void deleteSubject(Long id) {
         try {
             log.info("Deleting subject with id {}", id);
-            repo.deleteById(id);
+            subjectRepo.deleteById(id);
         } catch   (Exception e) {
             log.error("Error while deleting subject");
             throw e;
         }
+    }
+
+    // get classSubject positions for a given stream
+    public List<SubjectPosition> getClassSubjectPositions(Long classId) {
+        List<ClassSubject> classSubjects = classSubjectRepo.findByClassId(classId);
+
+        List<SubjectPosition> subjectPositions = new ArrayList<>();
+        classSubjects.forEach(classSubject -> {
+            // get total
+            AtomicReference<Double> total = new AtomicReference<>(0.0);
+            classSubject.getSubject().getStudentScores().forEach(score -> {
+                total.updateAndGet(v -> v + score.getStudentScore());
+            });
+            // get average
+            int totalStudentsWhoTookTheSubject = classSubject.getClassStream().getStudentList().size();
+            Double average = total.get() / totalStudentsWhoTookTheSubject;
+            //
+            SubjectPosition subjectPosition = SubjectPosition.builder()
+                    .classStreamName(classSubject.getClassStream().getName())
+                    .subjectName(classSubject.getSubject().getName())
+                    .classSubjectTotal(total.get())
+                    .classSubjectAverage(average)
+                    .build();
+            subjectPositions.add(subjectPosition);
+        });
+        // sort subjectPositions on classAverage and setClassSubjectPosition
+        subjectPositions.sort(Comparator.comparingDouble(SubjectPosition::getClassSubjectAverage));
+        for (int i = 0; i <= subjectPositions.size() - 1; i++) {
+            subjectPositions.get(i).setClassSubjectPosition(i + 1);
+        }
+        return subjectPositions;
     }
 }

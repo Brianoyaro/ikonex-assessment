@@ -4,6 +4,7 @@ import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
 import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import com.studentmanagementsystem.ikonex.classStream.repository.ClassStreamRepo;
+import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -11,7 +12,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 @Service
@@ -118,5 +122,37 @@ public class ClassStreamService {
                 .createdAt(classStream.getCreatedAt() != null ? LocalDateTime.parse(classStream.getCreatedAt().format(formatter)) : null)
                 .classSubjectList(classStream.getClassSubjects())
                 .build();
+    }
+
+    // get overall class positions
+    public List<ClassPosition> getOverallClassPositions() {
+        List<ClassStream> classStreams = repository.findAll();
+        List<ClassPosition> classPositions = new ArrayList<>();
+
+        classStreams.forEach(classStream -> {
+            AtomicReference<Double> total = new AtomicReference<>(0.0);
+            classStream.getClassSubjects().forEach(classSubject -> {
+                classSubject.getSubject().getStudentScores().forEach(score -> {
+                    total.updateAndGet(v -> v + score.getStudentScore());
+                });
+            });
+
+            int totalStudents = classStream.getStudentList().size();
+            Double average = total.get() / totalStudents;
+
+            ClassPosition classPosition = ClassPosition.builder()
+                    .classStreamName(classStream.getName())
+                    .totalStudents(totalStudents)
+                    .classTotal(total.get())
+                    .classAverage(average)
+                    //.classPosition()//TODO. Handled below.
+                    .build();
+            classPositions.add(classPosition);
+        });
+        classPositions.sort(Comparator.comparingDouble(ClassPosition::getClassAverage));
+        for (int i = 0; i <= classPositions.size() - 1; i++) {
+            classPositions.get(i).setClassPosition(i + 1);
+        }
+        return classPositions;
     }
 }

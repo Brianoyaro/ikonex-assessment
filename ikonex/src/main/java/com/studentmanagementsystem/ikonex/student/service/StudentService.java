@@ -163,7 +163,8 @@ public class StudentService {
     public List<StudentResponse> getStudentsBelongingToStreamId(Long streamId) {
         try {
             log.info("Inside getStudentsBelongingToStreamId method");
-            return classStreamRepo.getStudentsBelongingToStreamId(streamId)
+            ClassStream classStream = classStreamRepo.findById(streamId).orElseThrow(() -> new RuntimeException("Class Stream with ID " + streamId + "not found"));
+            return classStream.getStudentList()
                     .stream()
                     .map(this::mapper)
                     .collect(Collectors.toList());
@@ -174,7 +175,7 @@ public class StudentService {
         }
     }
 
-    public void getStudentResults(Long studentId) {
+    public StudentResult getStudentResults(Long studentId) {
         try {
             log.info("Inside getStudentResults method");
             // get student
@@ -193,7 +194,7 @@ public class StudentService {
             List<SubjectResult> subjectResults = subjectResultMapper(studentAssessmentScores);
 
             /* studentResult DTO*/
-            StudentResult studentResult = StudentResult.builder()
+            return StudentResult.builder()
                     .studentId(student.getId())
                     .studentName(student.getFirstName() + " " + student.getLastName())
                     .admissionNumber(student.getAdmissionNumber())

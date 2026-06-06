@@ -9,5 +9,4 @@ import java.util.List;
 
 @Repository
 public interface ClassStreamRepo extends JpaRepository<ClassStream, Long> {
-    List<Student> getStudentsBelongingToStreamId(Long streamId);
 }

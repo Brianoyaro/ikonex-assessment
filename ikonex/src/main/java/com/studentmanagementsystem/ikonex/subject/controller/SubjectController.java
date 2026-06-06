@@ -1,5 +1,6 @@
 package com.studentmanagementsystem.ikonex.subject.controller;
 
+import com.studentmanagementsystem.ikonex.subject.DTO.SubjectPosition;
 import com.studentmanagementsystem.ikonex.subject.DTO.SubjectRequest;
 import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
 import com.studentmanagementsystem.ikonex.subject.service.SubjectService;
@@ -91,6 +92,21 @@ public class SubjectController {
             HashMap<String, Object> map = new HashMap<>();
             map.put("message", e.getMessage());
             return   ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
+
+    // get subject positions for a given stream
+    @GetMapping("/position/{classStreamId}")
+    private ResponseEntity<?> getSubjectPosition(@PathVariable Long classStreamId) {
+        try {
+            log.info("Getting subject position with id {}", classStreamId);
+            List<SubjectPosition> response = service.getClassSubjectPositions(classStreamId);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            log.error(e.getMessage());
+            HashMap<String, Object> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return  ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
         }
     }
 }

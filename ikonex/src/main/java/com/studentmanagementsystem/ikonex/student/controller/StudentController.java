@@ -1,6 +1,7 @@
 package com.studentmanagementsystem.ikonex.student.controller;
 
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
+import com.studentmanagementsystem.ikonex.report.DTO.StudentResult;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentRequest;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentResponse;
 import com.studentmanagementsystem.ikonex.student.service.StudentService;
@@ -111,5 +112,17 @@ public class StudentController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
         }
     }
-
+    @GetMapping("/{id}/results")
+    public ResponseEntity<?> getStudentsResult(@PathVariable Long id) {
+        try {
+            log.info("Finding results for student with ID {}", id);
+            StudentResult response = service.getStudentResults(id);
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+        } catch (Exception e) {
+            log.error("Exception occurred while trying to get results for student with ID {}", id);
+            HashMap<String, String> map = new HashMap<>();
+            map.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(map);
+        }
+    }
 }
