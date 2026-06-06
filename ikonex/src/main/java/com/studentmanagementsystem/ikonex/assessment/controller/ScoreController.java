@@ -108,8 +108,9 @@ public class ScoreController {
             response.put("averageClassSubjectScore", averageClassSubjectScore);
             return ResponseEntity.status(HttpStatus.OK).body(response);
         } catch (Exception e) {
-            HashMap<String, Object>  response = new HashMap<>();
+            HashMap<String, Object> response = new HashMap<>();
             response.put("message", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        }
     }
 }

@@ -80,7 +80,7 @@ public class ScoreService {
     }
 
     // get all
-    public List<ScoreResponse> getScores(Long scoreId) {
+    public List<ScoreResponse> getScores() {
         try  {
             log.info("Inside getScores method");
             return scoreRepo.findAll()
