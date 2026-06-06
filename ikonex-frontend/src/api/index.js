@@ -20,6 +20,8 @@ export const studentAPI = {
   getById: (id) => apiClient.get(`/students/${id}`),
   update: (id, data) => apiClient.put(`/students/${id}`, data),
   delete: (id) => apiClient.delete(`/students/${id}`),
+  getByStream: (id) => apiClient.get(`/students/stream/${id}`),
+  getResults: (id) => apiClient.get(`/students/${id}/results`),
 };
 
 export const classStreamAPI = {
@@ -28,7 +30,8 @@ export const classStreamAPI = {
   getById: (id) => apiClient.get(`/class-streams/${id}`),
   update: (id, data) => apiClient.put(`/class-streams/${id}`, data),
   delete: (id) => apiClient.delete(`/class-streams/${id}`),
-  getStudents: (id) => apiClient.get(`/class-streams/${id}/students`),
+  getReport: (id) => apiClient.get(`/class-streams/${id}/report`),
+  getPositions: () => apiClient.get('/class-streams/positions'),
 };
 
 export const subjectAPI = {
@@ -42,6 +45,9 @@ export const subjectAPI = {
       classStreamId,
       subjectId,
     }),
+  getClassSubjectsByStream: (id) => apiClient.get(`/subjects/class-stream/${id}`),
+  getClassSubjects: () => apiClient.get('/subjects/class-stream/all'),
+  getSubjectPositionsByStream: (id) => apiClient.get(`/subjects/position/${id}`),
 };
 
 export const assessmentAPI = {
@@ -60,9 +66,4 @@ export const scoreAPI = {
   delete: (id) => apiClient.delete(`/scores/${id}`),
   getAverageByClassSubject: (classSubjectId) =>
     apiClient.get(`/scores/class-subject/${classSubjectId}`),
-  bulkCreate: (data) => apiClient.post('/scores/bulk', data),
-  getClassReport: (classStreamId, assessmentId) =>
-    apiClient.get(`/scores/report/class/${classStreamId}/${assessmentId}`),
-  getStudentReport: (subjectId) =>
-    apiClient.get(`/scores/report/subject/${subjectId}`),
 };

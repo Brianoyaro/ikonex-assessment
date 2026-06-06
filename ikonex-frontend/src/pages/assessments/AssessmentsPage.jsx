@@ -8,7 +8,7 @@ import FormInput from '../../components/forms/FormInput';
 import FormSelect from '../../components/forms/FormSelect';
 import { useApi } from '../../hooks/useApi';
 import { assessmentAPI } from '../../api';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const AssessmentsPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -41,7 +41,7 @@ const AssessmentsPage = () => {
       assessmentType: '',
       totalScore: '',
       term: '',
-      year: new Date().getFullYear().toString()
+      year: ''
     });
     setShowModal(true);
   };
@@ -52,9 +52,9 @@ const AssessmentsPage = () => {
     setFormData({
       assessmentName: assessment.assessmentName,
       assessmentType: assessment.assessmentType,
-      totalScore: assessment.totalScore.toString(),
+      totalScore: assessment.totalScore != null ? String(assessment.totalScore) : '',
       term: assessment.term,
-      year: assessment.year
+      year: assessment.year || ''
     });
     setShowModal(true);
   };
@@ -90,7 +90,7 @@ const AssessmentsPage = () => {
         assessmentType: '',
         totalScore: '',
         term: '',
-        year: new Date().getFullYear().toString()
+        year: ''
       });
       fetchAssessments();
     } catch (err) {
@@ -125,23 +125,17 @@ const AssessmentsPage = () => {
   ];
 
   const assessmentTypes = [
-    { label: 'CAT (Continuous Assessment Test)', value: 'CAT' },
+    { label: 'CAT 1', value: 'CAT_1' },
+    { label: 'CAT 2', value: 'CAT_2' },
     { label: 'Mid-Term Exam', value: 'MID_TERM' },
     { label: 'End-Term Exam', value: 'END_TERM' },
-    { label: 'Project', value: 'PROJECT' },
-    { label: 'Assignment', value: 'ASSIGNMENT' }
   ];
 
   const terms = [
-    { label: 'Term 1', value: 'TERM_1' },
-    { label: 'Term 2', value: 'TERM_2' },
-    { label: 'Term 3', value: 'TERM_3' }
+    { label: 'Term 1', value: 'TERM_ONE' },
+    { label: 'Term 2', value: 'TERM_TWO' },
+    { label: 'Term 3', value: 'TERM_THREE' }
   ];
-
-  const years = Array.from({ length: 5 }, (_, i) => {
-    const year = new Date().getFullYear() - 2 + i;
-    return { label: year.toString(), value: year.toString() };
-  });
 
   if (isLoading) {
     return <Layout><div className="flex justify-center items-center h-screen">Loading...</div></Layout>;
@@ -194,7 +188,7 @@ const AssessmentsPage = () => {
       </div>
 
       {/* Add/Edit Modal */}
-      <Modal show={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Assessment' : 'Add New Assessment'}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Assessment' : 'Add New Assessment'}>
         <div className="space-y-4 max-h-96 overflow-y-auto">
           <FormField label="Assessment Name" required>
             <FormInput
@@ -238,13 +232,11 @@ const AssessmentsPage = () => {
             />
           </FormField>
 
-          <FormField label="Year" required>
-            <FormSelect
-              name="year"
+          <FormField label="Assessment Date" required>
+            <FormInput
+              type="date"
               value={formData.year}
               onChange={(e) => setFormData({ ...formData, year: e.target.value })}
-              options={years}
-              placeholder="Select year"
               required
             />
           </FormField>
@@ -267,7 +259,7 @@ const AssessmentsPage = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
         <div className="space-y-4">
           <p className="text-gray-700">
             Are you sure you want to delete <strong>{selectedAssessment?.assessmentName}</strong>?

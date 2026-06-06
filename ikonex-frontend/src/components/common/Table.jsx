@@ -9,7 +9,8 @@ const Table = ({ headers, rows, actions, columns, data, onEdit, onDelete }) => {
     const value = row[key];
     if (typeof value === 'boolean') return value ? 'Yes' : 'No';
     if (value === null || value === undefined) return '-';
-    if (typeof value === 'object') return JSON.stringify(value);
+    if (Array.isArray(value)) return `${value.length} item(s)`;
+    if (typeof value === 'object') return '[Object]';
     return String(value);
   };
 
@@ -49,7 +50,7 @@ const Table = ({ headers, rows, actions, columns, data, onEdit, onDelete }) => {
                 {columns ? (
                   columns.map(col => (
                     <td key={col.key} className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {renderCell(row, col.key)}
+                      {col.render ? col.render(row) : renderCell(row, col.key)}
                     </td>
                   ))
                 ) : (

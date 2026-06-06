@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
 import { useApi } from '../../hooks/useApi';
-import { studentAPI } from '../../api';
+import { studentAPI, classStreamAPI } from '../../api';
 import Table from '../../components/common/Table';
 import Modal from '../../components/common/Modal';
 import Alert from '../../components/common/Alert';
@@ -14,19 +14,18 @@ import { Edit, Trash2, Plus } from 'lucide-react';
 const GENDERS = [
   { value: 'MALE', label: 'Male' },
   { value: 'FEMALE', label: 'Female' },
-  { value: 'OTHER', label: 'Other' },
 ];
 
 const STUDENT_STATUSES = [
   { value: 'ACTIVE', label: 'Active' },
   { value: 'INACTIVE', label: 'Inactive' },
-  { value: 'GRADUATED', label: 'Graduated' },
-  { value: 'TRANSFERRED', label: 'Transferred' },
 ];
 
+const toSelectOptions = (streams = []) =>
+  (Array.isArray(streams) ? streams : []).map((stream) => ({ value: String(stream.id), label: stream.name }));
+
 const StudentsPage = () => {
-  const [students, setStudents] = useState([]);
-  const [showModal, setShowModal] = useState(false);
+  const [students, setStudents] = useState([]);  const [showModal, setShowModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deleteId, setDeleteId] = useState(null);
@@ -53,6 +52,11 @@ const StudentsPage = () => {
   } = useApi(studentAPI.getAll);
 
   const {
+    data: classStreams,
+    execute: fetchClassStreams,
+  } = useApi(classStreamAPI.getAll);
+
+  const {
     execute: createStudent,
     isLoading: isCreating,
   } = useApi((data) => studentAPI.create(data));
@@ -70,12 +74,13 @@ const StudentsPage = () => {
   // Fetch students on mount
   useEffect(() => {
     fetchStudents();
+    fetchClassStreams();
   }, []);
 
   // Update students from API
   useEffect(() => {
     if (allStudents) {
-      setStudents(allStudents);
+      setStudents(Array.isArray(allStudents) ? allStudents : []);
     }
   }, [allStudents]);
 
@@ -90,7 +95,7 @@ const StudentsPage = () => {
         gender: student.gender || 'MALE',
         status: student.status || 'ACTIVE',
         dateOfBirth: student.dateOfBirth || '',
-        classStreamId: student.classStreamId || '',
+        classStreamId: student.classStreamId ? String(student.classStreamId) : '',
       });
     } else {
       setEditingId(null);
@@ -134,6 +139,10 @@ const StudentsPage = () => {
       setFormError('Date of birth is required');
       return false;
     }
+    if (!formData.classStreamId) {
+      setFormError('Class stream is required');
+      return false;
+    }
     return true;
   };
 
@@ -142,10 +151,16 @@ const StudentsPage = () => {
 
     try {
       if (editingId) {
-        await updateStudent(editingId, formData);
+        await updateStudent(editingId, {
+          ...formData,
+          classStreamId: Number(formData.classStreamId),
+        });
         setSuccessMessage('Student updated successfully');
       } else {
-        await createStudent(formData);
+        await createStudent({
+          ...formData,
+          classStreamId: Number(formData.classStreamId),
+        });
         setSuccessMessage('Student created successfully');
       }
       handleCloseModal();
@@ -175,10 +190,13 @@ const StudentsPage = () => {
 
   // Filter students
   const filteredStudents = students.filter((student) => {
+    const firstName = student.firstName || '';
+    const lastName = student.lastName || '';
+    const admissionNumber = student.admissionNumber || '';
     const matchesSearch =
-      student.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.admissionNumber.toLowerCase().includes(searchTerm.toLowerCase());
+      firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      admissionNumber.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = !filterStatus || student.status === filterStatus;
     return matchesSearch && matchesStatus;
   });
@@ -193,6 +211,7 @@ const StudentsPage = () => {
     },
     { key: 'gender', label: 'Gender', sortable: true },
     { key: 'status', label: 'Status', sortable: true },
+    { key: 'classStreamName', label: 'Class', sortable: true },
     { key: 'dateOfBirth', label: 'DOB', sortable: true },
     {
       key: 'actions',
@@ -354,12 +373,12 @@ const StudentsPage = () => {
           </div>
 
           <FormField label="Class Stream ID">
-            <FormInput
-              type="text"
+            <FormSelect
               name="classStreamId"
               value={formData.classStreamId}
               onChange={handleFormChange}
-              placeholder="e.g., 1"
+              options={toSelectOptions(classStreams || [])}
+              placeholder="Select class stream"
             />
           </FormField>
 

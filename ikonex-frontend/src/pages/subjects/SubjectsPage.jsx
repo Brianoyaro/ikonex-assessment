@@ -6,8 +6,9 @@ import Alert from '../../components/common/Alert';
 import FormField from '../../components/forms/FormField';
 import FormInput from '../../components/forms/FormInput';
 import { useApi } from '../../hooks/useApi';
-import { subjectAPI } from '../../api';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import FormSelect from '../../components/forms/FormSelect';
+import { subjectAPI, classStreamAPI } from '../../api';
+import { Plus } from 'lucide-react';
 
 const SubjectsPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -15,6 +16,9 @@ const SubjectsPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [assignClassStreamId, setAssignClassStreamId] = useState('');
+  const [assignSubjectId, setAssignSubjectId] = useState('');
+  const [assignMessage, setAssignMessage] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -23,12 +27,21 @@ const SubjectsPage = () => {
   });
 
   const { data: subjects, isLoading, error, execute: fetchSubjects } = useApi(subjectAPI.getAll);
+  const { data: classStreams, execute: fetchClassStreams } = useApi(classStreamAPI.getAll);
+  const { data: classSubjects, execute: fetchClassSubjects } = useApi(subjectAPI.getClassSubjects);
+
+  const safeSubjects = Array.isArray(subjects) ? subjects : [];
+  const safeClassStreams = Array.isArray(classStreams) ? classStreams : [];
+  const safeClassSubjects = Array.isArray(classSubjects) ? classSubjects : [];
   const { execute: createSubject } = useApi(subjectAPI.create);
   const { execute: updateSubject } = useApi(subjectAPI.update);
   const { execute: deleteSubject } = useApi(subjectAPI.delete);
+  const { execute: assignToClass, isLoading: isAssigning } = useApi(subjectAPI.assignToClass);
 
   useEffect(() => {
     fetchSubjects();
+    fetchClassStreams();
+    fetchClassSubjects();
   }, []);
 
   const handleAddClick = () => {
@@ -73,6 +86,21 @@ const SubjectsPage = () => {
     }
   };
 
+  const handleAssignSubject = async () => {
+    if (!assignClassStreamId || !assignSubjectId) {
+      setAssignMessage('Please select both class and subject to assign');
+      return;
+    }
+
+    try {
+      await assignToClass(Number(assignClassStreamId), Number(assignSubjectId));
+      setAssignMessage('Subject assigned to class successfully');
+      fetchClassSubjects();
+    } catch (err) {
+      setAssignMessage(err.response?.data?.message || 'Could not assign subject to class');
+    }
+  };
+
   const handleDelete = async () => {
     if (selectedSubject) {
       try {
@@ -86,7 +114,7 @@ const SubjectsPage = () => {
     }
   };
 
-  const filteredSubjects = (subjects || []).filter(subject =>
+  const filteredSubjects = safeSubjects.filter(subject =>
     subject.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     subject.code.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -96,6 +124,13 @@ const SubjectsPage = () => {
     { key: 'name', label: 'Subject Name' },
     { key: 'code', label: 'Code' },
     { key: 'description', label: 'Description' }
+  ];
+
+  const assignmentColumns = [
+    { key: 'id', label: 'Class Subject ID' },
+    { key: 'className', label: 'Class' },
+    { key: 'name', label: 'Subject' },
+    { key: 'code', label: 'Code' },
   ];
 
   if (isLoading) {
@@ -146,10 +181,55 @@ const SubjectsPage = () => {
             />
           )}
         </div>
+
+        {/* Assignment Panel */}
+        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">Assign Subject To Class</h2>
+          {assignMessage && (
+            <Alert
+              type={assignMessage.toLowerCase().includes('success') ? 'success' : 'error'}
+              message={assignMessage}
+            />
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <FormField label="Class Stream" required>
+              <FormSelect
+                name="assignClassStreamId"
+                value={assignClassStreamId}
+                onChange={(e) => setAssignClassStreamId(e.target.value)}
+                options={safeClassStreams.map((cs) => ({ value: String(cs.id), label: cs.name }))}
+                placeholder="Select class"
+              />
+            </FormField>
+            <FormField label="Subject" required>
+              <FormSelect
+                name="assignSubjectId"
+                value={assignSubjectId}
+                onChange={(e) => setAssignSubjectId(e.target.value)}
+                options={safeSubjects.map((s) => ({ value: String(s.id), label: `${s.name} (${s.code})` }))}
+                placeholder="Select subject"
+              />
+            </FormField>
+          </div>
+          <div className="flex justify-end">
+            <button
+              onClick={handleAssignSubject}
+              disabled={isAssigning}
+              className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {isAssigning ? 'Assigning...' : 'Assign Subject'}
+            </button>
+          </div>
+
+          <div>
+            <h3 className="text-lg font-medium text-gray-900 mb-3">Assigned Class Subjects</h3>
+            <Table columns={assignmentColumns} data={safeClassSubjects} />
+          </div>
+        </div>
       </div>
 
       {/* Add/Edit Modal */}
-      <Modal show={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Subject' : 'Add New Subject'}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Subject' : 'Add New Subject'}>
         <div className="space-y-4">
           <FormField label="Subject Name" required>
             <FormInput
@@ -199,7 +279,7 @@ const SubjectsPage = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
         <div className="space-y-4">
           <p className="text-gray-700">
             Are you sure you want to delete subject <strong>{selectedSubject?.name}</strong>?

@@ -1,8 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
 import FormSelect from '../../components/forms/FormSelect';
 import { useApi } from '../../hooks/useApi';
-import { classStreamAPI, subjectAPI, assessmentAPI, scoreAPI } from '../../api';
+import { classStreamAPI, subjectAPI, studentAPI } from '../../api';
 import { FileText, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
@@ -10,25 +10,31 @@ import html2canvas from 'html2canvas';
 const ReportPage = () => {
   const [reportType, setReportType] = useState('class');
   const [classStreamId, setClassStreamId] = useState('');
-  const [subjectId, setSubjectId] = useState('');
-  const [assessmentId, setAssessmentId] = useState('');
+  const [studentId, setStudentId] = useState('');
   const [reportData, setReportData] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState('');
   const reportRef = useRef();
 
-  const { data: classStreams = [] } = useApi(classStreamAPI.getAll);
-  const { data: subjects = [] } = useApi(subjectAPI.getAll);
-  const { data: assessments = [] } = useApi(assessmentAPI.getAll);
-  const { execute: fetchClassReport } = useApi(scoreAPI.getClassReport);
-  const { execute: fetchStudentReport } = useApi(scoreAPI.getStudentReport);
+  const { data: classStreams = [], execute: fetchClassStreams } = useApi(classStreamAPI.getAll);
+  const { data: students = [], execute: fetchStudents } = useApi(studentAPI.getAll);
+  const { execute: fetchClassReport } = useApi(classStreamAPI.getReport);
+  const { execute: fetchSubjectPosition } = useApi(subjectAPI.getSubjectPositionsByStream);
+  const { execute: fetchStudentReport } = useApi(studentAPI.getResults);
+
+  useEffect(() => {
+    fetchClassStreams();
+    fetchStudents();
+  }, []);
 
   const handleGenerateReport = async () => {
-    if (reportType === 'class' && (!classStreamId || !assessmentId)) {
-      alert('Please select class and assessment');
+    setError('');
+    if ((reportType === 'class' || reportType === 'subject') && !classStreamId) {
+      setError('Please select class stream');
       return;
     }
-    if (reportType === 'student' && !subjectId) {
-      alert('Please select subject');
+    if (reportType === 'student' && !studentId) {
+      setError('Please select a student');
       return;
     }
 
@@ -36,14 +42,15 @@ const ReportPage = () => {
     try {
       let data;
       if (reportType === 'class') {
-        data = await fetchClassReport(classStreamId, assessmentId);
+        data = await fetchClassReport(classStreamId);
+      } else if (reportType === 'subject') {
+        data = await fetchSubjectPosition(classStreamId);
       } else {
-        data = await fetchStudentReport(subjectId);
+        data = await fetchStudentReport(studentId);
       }
       setReportData(data);
     } catch (err) {
-      console.error('Error generating report:', err);
-      alert('Error generating report');
+      setError(err.response?.data?.message || 'Error generating report');
     } finally {
       setIsLoading(false);
     }
@@ -87,19 +94,14 @@ const ReportPage = () => {
     }
   };
 
-  const classStreamOptions = (classStreams || []).map(cs => ({
+  const classStreamOptions = (Array.isArray(classStreams) ? classStreams : []).map(cs => ({
     label: cs.name,
     value: cs.id.toString()
   }));
 
-  const subjectOptions = (subjects || []).map(s => ({
-    label: `${s.name} (${s.code})`,
+  const studentOptions = (Array.isArray(students) ? students : []).map(s => ({
+    label: `${s.firstName} ${s.lastName} (${s.admissionNumber})`,
     value: s.id.toString()
-  }));
-
-  const assessmentOptions = (assessments || []).map(a => ({
-    label: `${a.assessmentName} - ${a.assessmentType}`,
-    value: a.id.toString()
   }));
 
   return (
@@ -131,6 +133,19 @@ const ReportPage = () => {
             <label className="flex items-center gap-2 cursor-pointer">
               <input
                 type="radio"
+                value="student"
+                checked={reportType === 'student'}
+                onChange={(e) => {
+                  setReportType(e.target.value);
+                  setReportData(null);
+                }}
+                className="w-4 h-4"
+              />
+              <span>Student Report Card</span>
+            </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
                 value="subject"
                 checked={reportType === 'subject'}
                 onChange={(e) => {
@@ -139,13 +154,15 @@ const ReportPage = () => {
                 }}
                 className="w-4 h-4"
               />
-              <span>Subject Report</span>
+              <span>Subject Positions By Class</span>
             </label>
           </div>
 
+          {error && <p className="text-sm text-red-600 mb-4">{error}</p>}
+
           {/* Selection Panels */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            {reportType === 'class' && (
+            {(reportType === 'class' || reportType === 'subject') && (
               <>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -159,31 +176,19 @@ const ReportPage = () => {
                     placeholder="Choose class"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Assessment
-                  </label>
-                  <FormSelect
-                    name="assessment"
-                    value={assessmentId}
-                    onChange={(e) => setAssessmentId(e.target.value)}
-                    options={assessmentOptions}
-                    placeholder="Choose assessment"
-                  />
-                </div>
               </>
             )}
-            {reportType === 'subject' && (
+            {reportType === 'student' && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Subject
+                  Select Student
                 </label>
                 <FormSelect
-                  name="subject"
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
-                  options={subjectOptions}
-                  placeholder="Choose subject"
+                  name="student"
+                  value={studentId}
+                  onChange={(e) => setStudentId(e.target.value)}
+                  options={studentOptions}
+                  placeholder="Choose student"
                 />
               </div>
             )}
@@ -221,44 +226,27 @@ const ReportPage = () => {
                 </p>
               </div>
 
-              {reportType === 'class' && reportData?.classResults && (
+              {reportType === 'class' && Array.isArray(reportData) && (
                 <div>
                   <h3 className="text-xl font-semibold mb-4">Class Performance</h3>
-                  <div className="mb-6 grid grid-cols-2 gap-4">
-                    <div className="bg-blue-50 p-4 rounded">
-                      <p className="text-gray-600 text-sm">Class Name</p>
-                      <p className="text-xl font-bold">{reportData.classResults.className}</p>
-                    </div>
-                    <div className="bg-blue-50 p-4 rounded">
-                      <p className="text-gray-600 text-sm">Assessment</p>
-                      <p className="text-xl font-bold">{reportData.classResults.assessmentName}</p>
-                    </div>
-                    <div className="bg-green-50 p-4 rounded">
-                      <p className="text-gray-600 text-sm">Average Score</p>
-                      <p className="text-xl font-bold">{reportData.classResults.averageScore?.toFixed(2) || 'N/A'}</p>
-                    </div>
-                    <div className="bg-purple-50 p-4 rounded">
-                      <p className="text-gray-600 text-sm">Pass Rate</p>
-                      <p className="text-xl font-bold">{reportData.classResults.passRate?.toFixed(1) || 'N/A'}%</p>
-                    </div>
-                  </div>
-
                   <table className="w-full text-sm border-collapse">
                     <thead className="bg-gray-100">
                       <tr>
+                        <th className="border px-4 py-2 text-center">Position</th>
                         <th className="border px-4 py-2 text-left">Admission #</th>
                         <th className="border px-4 py-2 text-left">Student Name</th>
-                        <th className="border px-4 py-2 text-center">Score</th>
-                        <th className="border px-4 py-2 text-center">Grade</th>
+                        <th className="border px-4 py-2 text-center">Overall Total</th>
+                        <th className="border px-4 py-2 text-center">Overall Average</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.classResults.studentScores?.map((item, idx) => (
+                      {reportData.map((item, idx) => (
                         <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : ''}>
+                          <td className="border px-4 py-2 text-center">{item.studentPosition ?? '-'}</td>
                           <td className="border px-4 py-2">{item.admissionNumber}</td>
                           <td className="border px-4 py-2">{item.studentName}</td>
-                          <td className="border px-4 py-2 text-center">{item.score?.toFixed(2) || '-'}</td>
-                          <td className="border px-4 py-2 text-center font-bold">{item.grade || '-'}</td>
+                          <td className="border px-4 py-2 text-center">{item.overallTotal ?? '-'}</td>
+                          <td className="border px-4 py-2 text-center font-bold">{item.overallAverage ?? '-'}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -266,32 +254,73 @@ const ReportPage = () => {
                 </div>
               )}
 
-              {reportType === 'subject' && reportData?.subjectResults && (
+              {reportType === 'subject' && Array.isArray(reportData) && (
                 <div>
-                  <h3 className="text-xl font-semibold mb-4">Subject Performance</h3>
-                  <div className="mb-6 bg-blue-50 p-4 rounded">
-                    <p className="text-gray-600 text-sm">Subject</p>
-                    <p className="text-2xl font-bold">{reportData.subjectResults.subjectName}</p>
+                  <h3 className="text-xl font-semibold mb-4">Subject Positions</h3>
+
+                  <table className="w-full text-sm border-collapse">
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-4 py-2 text-left">Class</th>
+                        <th className="border px-4 py-2 text-left">Subject</th>
+                        <th className="border px-4 py-2 text-center">Total</th>
+                        <th className="border px-4 py-2 text-center">Average</th>
+                        <th className="border px-4 py-2 text-center">Position</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {reportData.map((item, idx) => (
+                        <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : ''}>
+                          <td className="border px-4 py-2">{item.classStreamName}</td>
+                          <td className="border px-4 py-2">{item.subjectName}</td>
+                          <td className="border px-4 py-2 text-center">{item.classSubjectTotal}</td>
+                          <td className="border px-4 py-2 text-center">{item.classSubjectAverage}</td>
+                          <td className="border px-4 py-2 text-center font-bold">{item.classSubjectPosition}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+
+              {reportType === 'student' && reportData && !Array.isArray(reportData) && (
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Student Report Card</h3>
+                  <div className="mb-6 grid grid-cols-2 gap-4">
+                    <div className="bg-blue-50 p-4 rounded">
+                      <p className="text-gray-600 text-sm">Student</p>
+                      <p className="text-xl font-bold">{reportData.studentName}</p>
+                    </div>
+                    <div className="bg-blue-50 p-4 rounded">
+                      <p className="text-gray-600 text-sm">Admission Number</p>
+                      <p className="text-xl font-bold">{reportData.admissionNumber}</p>
+                    </div>
+                    <div className="bg-green-50 p-4 rounded">
+                      <p className="text-gray-600 text-sm">Overall Total</p>
+                      <p className="text-xl font-bold">{reportData.overallTotal}</p>
+                    </div>
+                    <div className="bg-purple-50 p-4 rounded">
+                      <p className="text-gray-600 text-sm">Overall Average</p>
+                      <p className="text-xl font-bold">{reportData.overallAverage}</p>
+                    </div>
                   </div>
 
                   <table className="w-full text-sm border-collapse">
                     <thead className="bg-gray-100">
                       <tr>
-                        <th className="border px-4 py-2 text-left">Admission #</th>
-                        <th className="border px-4 py-2 text-left">Student Name</th>
-                        <th className="border px-4 py-2 text-center">Class</th>
-                        <th className="border px-4 py-2 text-center">Average Score</th>
+                        <th className="border px-4 py-2 text-left">Subject</th>
+                        <th className="border px-4 py-2 text-center">Total</th>
+                        <th className="border px-4 py-2 text-center">Average</th>
+                        <th className="border px-4 py-2 text-center">Grade</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {reportData.subjectResults.studentPerformance?.map((item, idx) => (
+                      {(reportData.subjects || []).map((subject, idx) => (
                         <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : ''}>
-                          <td className="border px-4 py-2">{item.admissionNumber}</td>
-                          <td className="border px-4 py-2">{item.studentName}</td>
-                          <td className="border px-4 py-2 text-center">{item.className}</td>
-                          <td className="border px-4 py-2 text-center font-bold">
-                            {item.averageScore?.toFixed(2) || '-'}
-                          </td>
+                          <td className="border px-4 py-2">{subject.subjectName}</td>
+                          <td className="border px-4 py-2 text-center">{subject.total}</td>
+                          <td className="border px-4 py-2 text-center">{subject.average}</td>
+                          <td className="border px-4 py-2 text-center font-bold">{subject.grade}</td>
                         </tr>
                       ))}
                     </tbody>

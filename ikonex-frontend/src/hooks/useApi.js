@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 
 export const useApi = (apiFunction) => {
-  const [data, setData] = useState(null);
+  const [data, setData] = useState(undefined);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 

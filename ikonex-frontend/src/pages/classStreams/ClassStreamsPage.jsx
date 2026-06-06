@@ -8,7 +8,7 @@ import FormInput from '../../components/forms/FormInput';
 import FormSelect from '../../components/forms/FormSelect';
 import { useApi } from '../../hooks/useApi';
 import { classStreamAPI } from '../../api';
-import { Plus, Edit2, Trash2 } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 const ClassStreamsPage = () => {
   const [showModal, setShowModal] = useState(false);
@@ -16,10 +16,11 @@ const ClassStreamsPage = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedStream, setSelectedStream] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [formError, setFormError] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
-    formLevel: '',
+    level: '',
     description: ''
   });
 
@@ -34,7 +35,8 @@ const ClassStreamsPage = () => {
 
   const handleAddClick = () => {
     setIsEditMode(false);
-    setFormData({ name: '', formLevel: '', description: '' });
+    setFormData({ name: '', level: '', description: '' });
+    setFormError('');
     setShowModal(true);
   };
 
@@ -43,9 +45,10 @@ const ClassStreamsPage = () => {
     setSelectedStream(stream);
     setFormData({
       name: stream.name,
-      formLevel: stream.formLevel.toString(),
+      level: String(stream.level ?? ''),
       description: stream.description
     });
+    setFormError('');
     setShowModal(true);
   };
 
@@ -55,8 +58,8 @@ const ClassStreamsPage = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.name || !formData.formLevel || !formData.description) {
-      alert('All fields are required');
+    if (!formData.name || !formData.level || !formData.description) {
+      setFormError('All fields are required');
       return;
     }
 
@@ -64,19 +67,19 @@ const ClassStreamsPage = () => {
       if (isEditMode && selectedStream) {
         await updateStream(selectedStream.id, {
           ...formData,
-          formLevel: parseInt(formData.formLevel)
+          level: parseInt(formData.level, 10)
         });
       } else {
         await createStream({
           ...formData,
-          formLevel: parseInt(formData.formLevel)
+          level: parseInt(formData.level, 10)
         });
       }
       setShowModal(false);
-      setFormData({ name: '', formLevel: '', description: '' });
+      setFormData({ name: '', level: '', description: '' });
       fetchStreams();
     } catch (err) {
-      console.error('Error saving class stream:', err);
+      setFormError(err.response?.data?.message || 'Error saving class stream');
     }
   };
 
@@ -88,20 +91,21 @@ const ClassStreamsPage = () => {
         setSelectedStream(null);
         fetchStreams();
       } catch (err) {
-        console.error('Error deleting class stream:', err);
+        setFormError(err.response?.data?.message || 'Error deleting class stream');
       }
     }
   };
 
-  const filteredStreams = (classStreams || []).filter(stream =>
+  const filteredStreams = (Array.isArray(classStreams) ? classStreams : []).filter(stream =>
     stream.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'name', label: 'Name' },
-    { key: 'formLevel', label: 'Form Level' },
-    { key: 'description', label: 'Description' }
+    { key: 'level', label: 'Form Level' },
+    { key: 'description', label: 'Description' },
+    { key: 'createdAt', label: 'Created At' }
   ];
 
   const formLevels = [
@@ -162,8 +166,9 @@ const ClassStreamsPage = () => {
       </div>
 
       {/* Add/Edit Modal */}
-      <Modal show={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Class' : 'Add New Class'}>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)} title={isEditMode ? 'Edit Class' : 'Add New Class'}>
         <div className="space-y-4">
+          {formError && <Alert type="error" message={formError} />}
           <FormField label="Class Name" required>
             <FormInput
               type="text"
@@ -176,9 +181,9 @@ const ClassStreamsPage = () => {
 
           <FormField label="Form Level" required>
             <FormSelect
-              name="formLevel"
-              value={formData.formLevel}
-              onChange={(e) => setFormData({ ...formData, formLevel: e.target.value })}
+              name="level"
+              value={formData.level}
+              onChange={(e) => setFormData({ ...formData, level: e.target.value })}
               options={formLevels}
               placeholder="Select form level"
               required
@@ -213,7 +218,7 @@ const ClassStreamsPage = () => {
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal show={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
+      <Modal isOpen={showDeleteConfirm} onClose={() => setShowDeleteConfirm(false)} title="Confirm Delete">
         <div className="space-y-4">
           <p className="text-gray-700">
             Are you sure you want to delete class <strong>{selectedStream?.name}</strong>?

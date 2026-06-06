@@ -16,7 +16,7 @@ import java.util.List;
 
 @Entity
 @Data
-@ToString(exclude = "classStream")
+@ToString(exclude = {"classStream", "assessmentScores"})
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -55,6 +55,7 @@ public class Student {
 
     @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
+    @JsonIgnore
     private List<Score> assessmentScores = new ArrayList<>();
 
     @PrePersist

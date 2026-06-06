@@ -1,29 +1,34 @@
 import React, { useState, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
-import Modal from '../../components/common/Modal';
 import Alert from '../../components/common/Alert';
 import FormSelect from '../../components/forms/FormSelect';
 import { useApi } from '../../hooks/useApi';
-import { classStreamAPI, subjectAPI, assessmentAPI, scoreAPI } from '../../api';
+import { classStreamAPI, subjectAPI, assessmentAPI, scoreAPI, studentAPI } from '../../api';
 import { Save } from 'lucide-react';
 
 const ScorePage = () => {
   const [classStreamId, setClassStreamId] = useState('');
-  const [subjectId, setSubjectId] = useState('');
+  const [classSubjectId, setClassSubjectId] = useState('');
   const [assessmentId, setAssessmentId] = useState('');
   const [scores, setScores] = useState([]);
-  const [showSaveConfirm, setShowSaveConfirm] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [formError, setFormError] = useState('');
 
-  const { data: classStreams = [] } = useApi(classStreamAPI.getAll);
-  const { data: subjects = [] } = useApi(subjectAPI.getAll);
-  const { data: assessments = [] } = useApi(assessmentAPI.getAll);
-  const { data: students = [], execute: fetchStudents } = useApi(classStreamAPI.getStudents);
-  const { execute: saveScores } = useApi(scoreAPI.bulkCreate);
+  const { data: classStreams, execute: fetchClassStreams } = useApi(classStreamAPI.getAll);
+  const { data: assessments, execute: fetchAssessments } = useApi(assessmentAPI.getAll);
+  const { data: classSubjects, execute: fetchClassSubjectsByStream } = useApi(subjectAPI.getClassSubjectsByStream);
+  const { data: students, execute: fetchStudentsByStream } = useApi(studentAPI.getByStream);
+  const { execute: createScore, isLoading: isSaving } = useApi(scoreAPI.create);
+
+  useEffect(() => {
+    fetchClassStreams();
+    fetchAssessments();
+  }, []);
 
   useEffect(() => {
     if (classStreamId) {
-      fetchStudents(classStreamId);
+      fetchStudentsByStream(classStreamId);
+      fetchClassSubjectsByStream(classStreamId);
     }
   }, [classStreamId]);
 
@@ -37,6 +42,8 @@ const ScorePage = () => {
           score: ''
         }))
       );
+    } else {
+      setScores([]);
     }
   }, [students]);
 
@@ -47,56 +54,56 @@ const ScorePage = () => {
   };
 
   const handleSaveScores = async () => {
-    if (!classStreamId || !subjectId || !assessmentId) {
-      alert('Please select class, subject, and assessment');
+    setFormError('');
+    if (!classStreamId || !classSubjectId || !assessmentId) {
+      setFormError('Please select class, class subject, and assessment');
       return;
     }
 
-    const invalidScores = scores.filter(s => s.score !== '' && (s.score < 0 || s.score > 100));
+    const invalidScores = scores.filter((s) => s.score !== '' && (s.score < 0 || s.score > 100));
     if (invalidScores.length > 0) {
-      alert('All scores must be between 0 and 100');
+      setFormError('All scores must be between 0 and 100');
+      return;
+    }
+
+    const scoreRows = scores.filter((s) => s.score !== '');
+    if (scoreRows.length === 0) {
+      setFormError('Enter at least one score before saving');
       return;
     }
 
     try {
-      const payload = {
-        classStreamId: parseInt(classStreamId),
-        subjectId: parseInt(subjectId),
-        assessmentId: parseInt(assessmentId),
-        scores: scores
-          .filter(s => s.score !== '')
-          .map(s => ({
-            studentId: s.studentId,
-            studentScore: s.score
-          }))
-      };
+      await Promise.all(
+        scoreRows.map((row) =>
+          createScore({
+            studentId: row.studentId,
+            classSubjectId: Number(classSubjectId),
+            assessmentId: Number(assessmentId),
+            score: Number(row.score),
+          })
+        )
+      );
 
-      await saveScores(payload);
       setSuccessMessage('Scores saved successfully!');
       setTimeout(() => setSuccessMessage(''), 3000);
-      setScores([]);
-      setClassStreamId('');
-      setSubjectId('');
-      setAssessmentId('');
     } catch (err) {
-      console.error('Error saving scores:', err);
-      alert('Error saving scores: ' + (err.message || 'Unknown error'));
+      setFormError(err.response?.data?.message || 'Error saving one or more scores');
     }
   };
 
-  const classStreamOptions = (classStreams || []).map(cs => ({
+  const classStreamOptions = (Array.isArray(classStreams) ? classStreams : []).map((cs) => ({
     label: cs.name,
-    value: cs.id.toString()
+    value: String(cs.id)
   }));
 
-  const subjectOptions = (subjects || []).map(s => ({
-    label: `${s.name} (${s.code})`,
-    value: s.id.toString()
+  const classSubjectOptions = (Array.isArray(classSubjects) ? classSubjects : []).map((cs) => ({
+    label: `${cs.name} (${cs.code})`,
+    value: String(cs.id)
   }));
 
-  const assessmentOptions = (assessments || []).map(a => ({
+  const assessmentOptions = (Array.isArray(assessments) ? assessments : []).map((a) => ({
     label: `${a.assessmentName} - ${a.assessmentType} (${a.totalScore} pts)`,
-    value: a.id.toString()
+    value: String(a.id)
   }));
 
   return (
@@ -109,6 +116,7 @@ const ScorePage = () => {
         </div>
 
         {successMessage && <Alert type="success" message={successMessage} />}
+        {formError && <Alert type="error" message={formError} />}
 
         {/* Selection Panel */}
         <div className="bg-white rounded-lg shadow p-6 grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -130,11 +138,11 @@ const ScorePage = () => {
               Select Subject
             </label>
             <FormSelect
-              name="subject"
-              value={subjectId}
-              onChange={(e) => setSubjectId(e.target.value)}
-              options={subjectOptions}
-              placeholder="Choose subject"
+              name="classSubject"
+              value={classSubjectId}
+              onChange={(e) => setClassSubjectId(e.target.value)}
+              options={classSubjectOptions}
+              placeholder="Choose class subject"
             />
           </div>
 
@@ -201,24 +209,25 @@ const ScorePage = () => {
             <div className="bg-gray-50 px-6 py-4 flex justify-end gap-2">
               <button
                 onClick={handleSaveScores}
+                disabled={isSaving}
                 className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
               >
                 <Save size={20} />
-                Save All Scores
+                {isSaving ? 'Saving...' : 'Save Scores'}
               </button>
             </div>
           </div>
         )}
 
-        {scores.length === 0 && classStreamId && subjectId && assessmentId && (
+        {scores.length === 0 && classStreamId && classSubjectId && assessmentId && (
           <div className="text-center py-12 text-gray-500">
             <p>No students found in selected class or loading data...</p>
           </div>
         )}
 
-        {!classStreamId && !subjectId && !assessmentId && (
+        {!classStreamId && !classSubjectId && !assessmentId && (
           <div className="text-center py-12 text-gray-500">
-            <p>Select a class, subject, and assessment to begin entering scores</p>
+            <p>Select a class, class subject, and assessment to begin entering scores</p>
           </div>
         )}
       </div>

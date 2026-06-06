@@ -1,5 +1,6 @@
 package com.studentmanagementsystem.ikonex.assessment.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.studentmanagementsystem.ikonex.student.model.Student;
 import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
 import jakarta.persistence.*;
@@ -7,9 +8,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 @Entity
 @Data
+@ToString(exclude = {"student", "classSubject", "assessment"})
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -35,14 +38,17 @@ public class Score {
 
     @ManyToOne
     @JoinColumn(name = "student_id")
+    @JsonIgnore
     private Student student;
 
     @ManyToOne
     @JoinColumn(name = "class_subject_id")
+    @JsonIgnore
     private ClassSubject classSubject;
 
     @ManyToOne
     @JoinColumn(name = "assessment_id")
+    @JsonIgnore
     private Assessment assessment;
 
 //    private String studentId | subjectID | assesmentId;
