@@ -13,8 +13,10 @@ public class ScoreResponse {
     private String assessment;
     private String subjectName;
     private Double score;
-    private Long studentAdmissionNumber;
+    private String studentAdmissionNumber;
     private String className;
+    private String grade;
+    private Double maxScore;
 
     /*
     e.g

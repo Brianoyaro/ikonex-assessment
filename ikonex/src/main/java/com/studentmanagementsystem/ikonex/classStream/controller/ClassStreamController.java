@@ -5,6 +5,7 @@ import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamStudentResult;
 import com.studentmanagementsystem.ikonex.classStream.service.ClassStreamService;
 import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/class-streams")
+@RequestMapping("/class-streams")
 @RequiredArgsConstructor
 @Slf4j
 public class ClassStreamController {
@@ -23,7 +24,7 @@ public class ClassStreamController {
 
     //Create
     @PostMapping
-    public ResponseEntity<?> createClassStream(@RequestBody ClassStreamRequest classStream) {
+    public ResponseEntity<?> createClassStream(@Valid @RequestBody ClassStreamRequest classStream) {
         try {
             ClassStreamResponse response = service.createClassStream(classStream);
             log.debug(response.toString());
@@ -69,7 +70,7 @@ public class ClassStreamController {
 
     //Update
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateClassStream(@PathVariable Long id, @RequestBody ClassStreamRequest classStreamRequest) {
+    public ResponseEntity<?> updateClassStream(@PathVariable Long id, @Valid @RequestBody ClassStreamRequest classStreamRequest) {
         try {
             ClassStreamResponse response = service.updateClassStream(id, classStreamRequest);
             log.debug(response.toString());

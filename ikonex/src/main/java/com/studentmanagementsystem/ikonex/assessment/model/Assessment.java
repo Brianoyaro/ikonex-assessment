@@ -39,7 +39,7 @@ public class Assessment {
     @Column(nullable = false)
     private LocalDate year;
 
-    @OneToOne(mappedBy = "assessment", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "assessment", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Score> assessmentScores =  new ArrayList<>();
 }

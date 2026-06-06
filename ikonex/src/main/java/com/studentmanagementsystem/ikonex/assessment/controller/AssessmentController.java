@@ -3,6 +3,7 @@ package com.studentmanagementsystem.ikonex.assessment.controller;
 import com.studentmanagementsystem.ikonex.assessment.DTO.AssessmentRequest;
 import com.studentmanagementsystem.ikonex.assessment.DTO.AssessmentResponse;
 import com.studentmanagementsystem.ikonex.assessment.service.AssessmentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -13,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/assessments")
+@RequestMapping("/assessments")
 @RequiredArgsConstructor
 @Slf4j
 public class AssessmentController {
@@ -21,7 +22,7 @@ public class AssessmentController {
 
     // Create
     @PostMapping
-    public ResponseEntity<?> createAssessment(@RequestBody AssessmentRequest request) {
+    public ResponseEntity<?> createAssessment(@Valid @RequestBody AssessmentRequest request) {
         try {
             log.debug("Creating assessment with request {}", request);
             AssessmentResponse assessmentResponse = assessmentService.createAssessment(request);
@@ -66,7 +67,7 @@ public class AssessmentController {
 
     // Update
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateAssessment(@PathVariable Long id, @RequestBody AssessmentRequest request) {
+    public ResponseEntity<?> updateAssessment(@PathVariable Long id, @Valid @RequestBody AssessmentRequest request) {
         try {
             log.debug("Updating assessment with id {}", id);
             AssessmentResponse response = assessmentService.updateAssessment(id, request);

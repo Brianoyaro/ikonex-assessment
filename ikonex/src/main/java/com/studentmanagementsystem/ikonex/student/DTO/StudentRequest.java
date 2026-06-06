@@ -1,5 +1,6 @@
 package com.studentmanagementsystem.ikonex.student.DTO;
 
+import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -19,5 +20,4 @@ public class StudentRequest {
     private String status;
     private LocalDate dateOfBirth;
     private Long classStreamId;
-
 }

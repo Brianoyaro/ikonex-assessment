@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Year;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -143,8 +142,6 @@ public class StudentService {
     }
     // mapper
     private StudentResponse mapper(Student student){
-        DateTimeFormatter dateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
         return StudentResponse.builder()
                 .id(student.getId())
                 .admissionNumber(student.getAdmissionNumber())
@@ -154,7 +151,7 @@ public class StudentService {
                 .status(student.getStatus().name())
                 .dateOfBirth(student.getDateOfBirth())
                 .classStreamName(student.getClassStream().getName())
-                .createdAt(student.getCreatedAt() != null ? LocalDate.parse(student.getCreatedAt().format(dateTimeFormatter)) : null)
+                .createdAt(student.getCreatedAt() != null ? student.getCreatedAt().toLocalDate() : null)
                 .assessmentScores(student.getAssessmentScores())
                 .build();
     }

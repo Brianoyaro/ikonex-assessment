@@ -115,15 +115,13 @@ public class ClassStreamService {
 
     // mapper
     private ClassStreamResponse mapper(ClassStream classStream) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
         return ClassStreamResponse.builder()
                 .id(classStream.getId())
                 .name(classStream.getName())
                 .level(classStream.getFormLevel())
                 .description(classStream.getDescription())
                 .studentList(classStream.getStudentList())
-                .createdAt(classStream.getCreatedAt() != null ? LocalDateTime.parse(classStream.getCreatedAt().format(formatter)) : null)
+                .createdAt(classStream.getCreatedAt())
                 .classSubjectList(classStream.getClassSubjects())
                 .build();
     }
@@ -169,7 +167,16 @@ public class ClassStreamService {
         classStream.getStudentList().forEach(student -> {
             // get the student report using student service
             StudentResult studentResult = studentService.getStudentResults(student.getId());
-            classStreamStudentResult.add((ClassStreamStudentResult) studentResult);
+            // Create a new ClassStreamStudentResult from StudentResult
+            ClassStreamStudentResult result = new ClassStreamStudentResult();
+            result.setStudentId(studentResult.getStudentId());
+            result.setAdmissionNumber(studentResult.getAdmissionNumber());
+            result.setStudentName(studentResult.getStudentName());
+            result.setClassStream(studentResult.getClassStream());
+            result.setSubjects(studentResult.getSubjects());
+            result.setOverallTotal(studentResult.getOverallTotal());
+            result.setOverallAverage(studentResult.getOverallAverage());
+            classStreamStudentResult.add(result);
         });
 
         // sort the on student overallAverage and set their position

@@ -2,6 +2,7 @@ package com.studentmanagementsystem.ikonex.subject.controller;
 
 import com.studentmanagementsystem.ikonex.subject.DTO.*;
 import com.studentmanagementsystem.ikonex.subject.service.SubjectService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/subjects")
+@RequestMapping("/subjects")
 @RequiredArgsConstructor
 @Slf4j
 public class SubjectController {
@@ -20,7 +21,7 @@ public class SubjectController {
 
     // Create
     @PostMapping
-    public ResponseEntity<?> createSubject(@RequestBody SubjectRequest request) {
+    public ResponseEntity<?> createSubject(@Valid @RequestBody SubjectRequest request) {
         try {
             SubjectResponse response = service.createSubject(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -48,7 +49,7 @@ public class SubjectController {
 
     // Get all
     @GetMapping
-    public ResponseEntity<?> getSubjects(@PathVariable Long id) {
+    public ResponseEntity<?> getSubjects() {
         try {
             log.info("Getting all subjects");
             List<SubjectResponse> response = service.getAllSubjects();
@@ -61,8 +62,8 @@ public class SubjectController {
         }
     }
     // update
-    @PutMapping
-    public ResponseEntity<?> updateSubject(@PathVariable Long id, @RequestBody SubjectRequest request) {
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateSubject(@PathVariable Long id, @Valid @RequestBody SubjectRequest request) {
         try {
             log.info("Updating subject with id {}", id);
             SubjectResponse response = service.updateSubject(id, request);

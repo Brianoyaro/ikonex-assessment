@@ -61,7 +61,7 @@ public class ScoreService {
     private ScoreResponse mapper(Score score) {
         return ScoreResponse.builder()
                 .score(score.getStudentScore())
-                .studentAdmissionNumber(Long.valueOf(score.getStudent().getAdmissionNumber()))
+                .studentAdmissionNumber(score.getStudent().getAdmissionNumber())
                 .className(score.getClassSubject().getClassStream().getName())
                 .subjectName(score.getClassSubject().getSubject().getName())
                 .assessment(score.getAssessment().getAssessmentName() + score.getAssessment().getTerm() +  score.getAssessment().getYear())

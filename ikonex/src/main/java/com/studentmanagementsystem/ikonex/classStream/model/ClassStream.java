@@ -3,10 +3,7 @@ package com.studentmanagementsystem.ikonex.classStream.model;
 import com.studentmanagementsystem.ikonex.student.model.Student;
 import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,6 +11,7 @@ import java.util.List;
 
 @Entity
 @Data
+@ToString(exclude = "studentList")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -22,7 +20,7 @@ public class ClassStream {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "classStream", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Student> studentList =  new ArrayList<>();
 

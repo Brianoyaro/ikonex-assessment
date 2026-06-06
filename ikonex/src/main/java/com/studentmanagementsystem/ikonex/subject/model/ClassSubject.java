@@ -39,7 +39,7 @@ public class ClassSubject {
     @JoinColumn(name = "subject_id")
     private Subject subject;
 
-    @OneToOne(mappedBy ="classSubject", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy ="classSubject", cascade = CascadeType.ALL)
     @Builder.Default
     private List<Score> studentScores = new ArrayList<>();
 }

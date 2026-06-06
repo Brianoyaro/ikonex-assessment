@@ -4,6 +4,7 @@ import com.studentmanagementsystem.ikonex.assessment.DTO.ScoreRequest;
 import com.studentmanagementsystem.ikonex.assessment.DTO.ScoreResponse;
 import com.studentmanagementsystem.ikonex.assessment.model.Score;
 import com.studentmanagementsystem.ikonex.assessment.service.ScoreService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +16,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/scores")
+@RequestMapping("/scores")
 @RequiredArgsConstructor
 @Slf4j
 public class ScoreController {
@@ -23,7 +24,7 @@ public class ScoreController {
 
     // Create
     @PostMapping
-    public ResponseEntity<?> createScore(@RequestBody ScoreRequest request) {
+    public ResponseEntity<?> createScore(@Valid @RequestBody ScoreRequest request) {
         try {
             log.info("Inside createScore method");
             ScoreResponse scoreResponse = scoreService.createScore(request);
@@ -65,7 +66,7 @@ public class ScoreController {
 
     // Update
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateScore(@PathVariable Long id, @RequestBody ScoreRequest request) {
+    public ResponseEntity<?> updateScore(@PathVariable Long id, @Valid @RequestBody ScoreRequest request) {
         try {
             log.info("Inside updateScore method");
             ScoreResponse scoreResponse = scoreService.updateScore(id, request);

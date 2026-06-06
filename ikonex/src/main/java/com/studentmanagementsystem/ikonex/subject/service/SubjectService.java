@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -70,27 +69,24 @@ public class SubjectService {
 
     // subject mapper
     private SubjectResponse subjectMapper(Subject subject) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
         return SubjectResponse.builder()
+                .id(subject.getId())
                 .code(subject.getCode())
                 .name(subject.getName())
                 .description(subject.getDescription())
-                .createdAt(LocalDateTime.parse(subject.getCreatedAt().format(formatter)))
+                .createdAt(subject.getCreatedAt())
                 //.studentScores(subject.getStudentScores())
                 .build();
     }
 
     // classSubject mapper
     private ClassSubjectResponse classSubjectMapper(ClassSubject classSubject) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
-
         return ClassSubjectResponse.builder()
                 .id(classSubject.getId())
                 .code(classSubject.getSubject().getCode())
                 .name(classSubject.getSubject().getName())
                 .description(classSubject.getSubject().getDescription())
-                .createdAt(LocalDateTime.parse(classSubject.getSubject().getCreatedAt().format(formatter)))
+                .createdAt(classSubject.getSubject().getCreatedAt())
                 .studentScores(classSubject.getStudentScores())
                 .className(classSubject.getClassStream().getName())
                 .build();

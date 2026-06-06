@@ -4,6 +4,7 @@ import com.studentmanagementsystem.ikonex.student.DTO.StudentResult;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentRequest;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentResponse;
 import com.studentmanagementsystem.ikonex.student.service.StudentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/students")
+@RequestMapping("/students")
 @RequiredArgsConstructor
 @Slf4j
 public class StudentController {
@@ -22,7 +23,7 @@ public class StudentController {
 
     // Create
     @PostMapping
-    public ResponseEntity<?> createStudent(@RequestBody StudentRequest request) {
+    public ResponseEntity<?> createStudent(@Valid @RequestBody StudentRequest request) {
         try {
             StudentResponse response = service.createStudent(request);
             log.info("Student Created Successfully");
@@ -67,7 +68,7 @@ public class StudentController {
 
     // Update
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody StudentRequest request) {
+    public ResponseEntity<?> updateStudent(@PathVariable Long id, @Valid @RequestBody StudentRequest request) {
         try {
             StudentResponse response = service.updateStudent(id, request);
             log.info("Student with ID {} Updated Successfully", id);
@@ -87,7 +88,7 @@ public class StudentController {
             //
             service.deleteStudent(id);
             HashMap<String,String> map = new HashMap<>();
-            map.put("message","Class Stream has been deleted successfully");
+            map.put("message","Student has been deleted successfully");
             return ResponseEntity.status(HttpStatus.OK).body(map);
         } catch (Exception e) {
             log.error(e.getMessage());

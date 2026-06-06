@@ -4,6 +4,7 @@ import com.studentmanagementsystem.ikonex.assessment.model.Score;
 import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import com.studentmanagementsystem.ikonex.student.enums.Gender;
 import com.studentmanagementsystem.ikonex.student.enums.Status;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Entity
 @Data
+@ToString(exclude = "classStream")
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -48,10 +50,10 @@ public class Student {
 
     @ManyToOne(fetch = FetchType.LAZY,  optional = false)
     @JoinColumn(name = "class_stream_id" ,nullable = false)
+    @JsonIgnore
     private ClassStream classStream;
 
-
-    @OneToOne(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "student", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Builder.Default
     private List<Score> assessmentScores = new ArrayList<>();
 
