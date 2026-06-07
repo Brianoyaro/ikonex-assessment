@@ -38,7 +38,8 @@ public class ClassStream {
 
 
     @OneToMany(mappedBy = "classStream")
-    private List<ClassSubject> classSubjects;
+    @Builder.Default
+    private List<ClassSubject> classSubjects = new ArrayList<>();
 
     // created_at pre-persist
     @PrePersist
