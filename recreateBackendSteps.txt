@@ -1,0 +1,3 @@
+mvn clean package -DskipTests
+sudo cp target/*.jar /opt/student-management/app.jar
+sudo systemctl start student-management
