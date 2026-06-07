@@ -84,7 +84,7 @@ public class ClassStreamController {
     }
 
     //Delete
-    @DeleteMapping
+    @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteClassStream(@PathVariable Long id) {
         try {
             //
