@@ -2,12 +2,15 @@ package com.studentmanagementsystem.ikonex.classStream.service;
 
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamRequest;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamResponse;
+import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamStudentObject;
 import com.studentmanagementsystem.ikonex.classStream.DTO.ClassStreamStudentResult;
 import com.studentmanagementsystem.ikonex.classStream.model.ClassStream;
 import com.studentmanagementsystem.ikonex.classStream.repository.ClassStreamRepo;
+import com.studentmanagementsystem.ikonex.student.DTO.StudentResponse;
 import com.studentmanagementsystem.ikonex.student.DTO.StudentResult;
 import com.studentmanagementsystem.ikonex.student.service.StudentService;
 import com.studentmanagementsystem.ikonex.subject.DTO.ClassPosition;
+import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -115,14 +118,43 @@ public class ClassStreamService {
 
     // mapper
     private ClassStreamResponse mapper(ClassStream classStream) {
+
+        List<ClassStreamStudentObject> studentResponseList = new ArrayList<>();
+        classStream.getStudentList().forEach(student -> {
+            //
+            ClassStreamStudentObject studentResponse = ClassStreamStudentObject.builder()
+                    .id(student.getId())
+                    .admissionNumber(student.getAdmissionNumber())
+                    .firstName(student.getFirstName())
+                    .lastName(student.getLastName())
+                    .gender(String.valueOf(student.getGender()))
+                    .status(String.valueOf(student.getStatus()))
+                    .dateOfBirth(student.getDateOfBirth())
+                    .build();
+            studentResponseList.add(studentResponse);
+        });
+
+        List<SubjectResponse> subjectResponseList = new ArrayList<>();
+        classStream.getClassSubjects().forEach(subject -> {
+            //
+            SubjectResponse subjectResponse = SubjectResponse.builder()
+                    .id(subject.getId())
+                    .name(subject.getSubject().getName())
+                    .description(subject.getSubject().getDescription())
+                    .code(subject.getSubject().getCode())
+                    .createdAt(subject.getSubject().getCreatedAt())
+                    .build();
+            subjectResponseList.add(subjectResponse);
+        });
+
         return ClassStreamResponse.builder()
                 .id(classStream.getId())
                 .name(classStream.getName())
                 .level(classStream.getFormLevel())
                 .description(classStream.getDescription())
-                .studentList(classStream.getStudentList())
+                .studentList(studentResponseList)// instead or returning the student list, How about returning a list of studentResponse
                 .createdAt(classStream.getCreatedAt())
-                .classSubjectList(classStream.getClassSubjects())
+                .classSubjectList(subjectResponseList)
                 .build();
     }
 
