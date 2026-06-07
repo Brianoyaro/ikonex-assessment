@@ -20,7 +20,7 @@ const AssessmentsPage = () => {
   const [formData, setFormData] = useState({
     assessmentName: '',
     assessmentType: '',
-    totalScore: '',
+    assessmentTotal: '',
     term: '',
     year: ''
   });
@@ -39,7 +39,7 @@ const AssessmentsPage = () => {
     setFormData({
       assessmentName: '',
       assessmentType: '',
-      totalScore: '',
+      assessmentTotal: '',
       term: '',
       year: ''
     });
@@ -52,7 +52,7 @@ const AssessmentsPage = () => {
     setFormData({
       assessmentName: assessment.assessmentName,
       assessmentType: assessment.assessmentType,
-      totalScore: assessment.totalScore != null ? String(assessment.totalScore) : '',
+      assessmentTotal: assessment.assessmentTotal != null ? String(assessment.assessmentTotal) : '',
       term: assessment.term,
       year: assessment.year || ''
     });
@@ -65,7 +65,7 @@ const AssessmentsPage = () => {
   };
 
   const handleSave = async () => {
-    if (!formData.assessmentName || !formData.assessmentType || !formData.totalScore || !formData.term || !formData.year) {
+    if (!formData.assessmentName || !formData.assessmentType || !formData.assessmentTotal || !formData.term || !formData.year) {
       alert('All fields are required');
       return;
     }
@@ -74,7 +74,7 @@ const AssessmentsPage = () => {
       const payload = {
         assessmentName: formData.assessmentName,
         assessmentType: formData.assessmentType,
-        assessmentTotal: parseFloat(formData.totalScore),
+        assessmentTotal: parseFloat(formData.assessmentTotal),
         term: formData.term,
         year: formData.year
       };
@@ -82,7 +82,7 @@ const AssessmentsPage = () => {
       console.log('Saving assessment with payload:', payload);
 
       if (isEditMode && selectedAssessment) {
-        await updateAssessment(selectedAssessment.id, payload);
+        await updateAssessment(selectedAssessment.assessmentId, payload);
       } else {
         await createAssessment(payload);
       }
@@ -90,7 +90,7 @@ const AssessmentsPage = () => {
       setFormData({
         assessmentName: '',
         assessmentType: '',
-        totalScore: '',
+        assessmentTotal: '',
         term: '',
         year: ''
       });
@@ -103,7 +103,7 @@ const AssessmentsPage = () => {
   const handleDelete = async () => {
     if (selectedAssessment) {
       try {
-        await deleteAssessment(selectedAssessment.id);
+        await deleteAssessment(selectedAssessment.assessmentId);
         setShowDeleteConfirm(false);
         setSelectedAssessment(null);
         fetchAssessments();
@@ -116,12 +116,13 @@ const AssessmentsPage = () => {
   const filteredAssessments = (assessments || []).filter(assessment =>
     assessment.assessmentName.toLowerCase().includes(searchTerm.toLowerCase())
   );
+  console.log('Filtered Assessments:', filteredAssessments);
 
   const columns = [
-    { key: 'id', label: 'ID' },
+    { key: 'assessmentId', label: 'ID' },
     { key: 'assessmentName', label: 'Assessment Name' },
     { key: 'assessmentType', label: 'Type' },
-    { key: 'totalScore', label: 'Total Score' },
+    { key: 'assessmentTotal', label: 'Total Score' },
     { key: 'term', label: 'Term' },
     { key: 'year', label: 'Year' }
   ];
@@ -217,8 +218,8 @@ const AssessmentsPage = () => {
             <FormInput
               type="number"
               placeholder="e.g., 100"
-              value={formData.totalScore}
-              onChange={(e) => setFormData({ ...formData, totalScore: e.target.value })}
+              value={formData.assessmentTotal}
+              onChange={(e) => setFormData({ ...formData, assessmentTotal: e.target.value })}
               required
             />
           </FormField>
