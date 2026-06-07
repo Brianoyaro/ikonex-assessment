@@ -74,10 +74,12 @@ const AssessmentsPage = () => {
       const payload = {
         assessmentName: formData.assessmentName,
         assessmentType: formData.assessmentType,
-        totalScore: parseFloat(formData.totalScore),
+        assessmentTotal: parseFloat(formData.totalScore),
         term: formData.term,
         year: formData.year
       };
+
+      console.log('Saving assessment with payload:', payload);
 
       if (isEditMode && selectedAssessment) {
         await updateAssessment(selectedAssessment.id, payload);
