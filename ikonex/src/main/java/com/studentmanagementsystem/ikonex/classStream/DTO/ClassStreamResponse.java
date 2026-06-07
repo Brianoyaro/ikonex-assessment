@@ -1,6 +1,7 @@
 package com.studentmanagementsystem.ikonex.classStream.DTO;
 
 import com.studentmanagementsystem.ikonex.student.model.Student;
+import com.studentmanagementsystem.ikonex.subject.DTO.SubjectResponse;
 import com.studentmanagementsystem.ikonex.subject.model.ClassSubject;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -20,7 +21,7 @@ public class ClassStreamResponse {
     private Integer level;
     private String description;
     private LocalDateTime createdAt;
-    private List<Student> studentList;
+    private List<ClassStreamStudentObject> studentList;
 
-    private List<ClassSubject> classSubjectList;
+    private List<SubjectResponse> classSubjectList;
 }
