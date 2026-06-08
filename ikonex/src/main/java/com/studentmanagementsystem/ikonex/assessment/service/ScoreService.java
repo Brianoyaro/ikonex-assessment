@@ -69,6 +69,7 @@ public class ScoreService {
                 .className(score.getClassSubject().getClassStream().getName())
                 .subjectName(score.getClassSubject().getSubject().getName())
                 .assessment(score.getAssessment().getAssessmentName() + score.getAssessment().getTerm() +  score.getAssessment().getYear())
+                .maxScore(score.getAssessment().getTotalScore())
                 .build();
     }
 
