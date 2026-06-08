@@ -139,6 +139,38 @@ const ReportPage = () => {
     value: s.id.toString()
   }));
 
+  const getAssessmentScores = (scores = []) => {
+    const result = {
+      cat1: '-',
+      cat2: '-',
+      midterm: '-',
+      final: '-'
+    };
+
+    scores.forEach(score => {
+      const type = score.assessmentName
+        .split('-')
+        .pop()
+        .trim()
+        .toUpperCase();
+
+      if (type === 'CAT 1') {
+        result.cat1 = score.studentScore;
+      } else if (type === 'CAT 2') {
+        result.cat2 = score.studentScore;
+      } else if (type.includes('MID')) {
+        result.midterm = score.studentScore;
+      } else if (
+        type.includes('END') ||
+        type.includes('FINAL')
+      ) {
+        result.final = score.studentScore;
+      }
+    });
+
+    return result;
+  };
+
   return (
     <Layout>
       <div className="space-y-6">
@@ -341,15 +373,27 @@ const ReportPage = () => {
                   </div>
 
                   <table className="w-full text-sm border-collapse">
-                    <thead className="bg-gray-100">
+                    {/* <thead className="bg-gray-100">
                       <tr>
                         <th className="border px-4 py-2 text-left">Subject</th>
                         <th className="border px-4 py-2 text-center">Total</th>
                         <th className="border px-4 py-2 text-center">Average</th>
                         <th className="border px-4 py-2 text-center">Grade</th>
                       </tr>
+                    </thead> */}
+                    <thead className="bg-gray-100">
+                      <tr>
+                        <th className="border px-4 py-2 text-left">Subject</th>
+                        <th className="border px-4 py-2 text-center">CAT 1</th>
+                        <th className="border px-4 py-2 text-center">CAT 2</th>
+                        <th className="border px-4 py-2 text-center">Mid-Term</th>
+                        <th className="border px-4 py-2 text-center">Final Exam</th>
+                        <th className="border px-4 py-2 text-center">Total</th>
+                        <th className="border px-4 py-2 text-center">Average</th>
+                        <th className="border px-4 py-2 text-center">Grade</th>
+                      </tr>
                     </thead>
-                    <tbody>
+                    {/* <tbody>
                       {(reportData.subjects || []).map((subject, idx) => (
                         <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : ''}>
                           <td className="border px-4 py-2">{subject.subjectName}</td>
@@ -358,6 +402,50 @@ const ReportPage = () => {
                           <td className="border px-4 py-2 text-center font-bold">{subject.grade}</td>
                         </tr>
                       ))}
+                    </tbody> */}
+                    <tbody>
+                      {(reportData.subjects || []).map((subject, idx) => {
+                        const assessments = getAssessmentScores(subject.scores);
+
+                        return (
+                          <tr
+                            key={idx}
+                            className={idx % 2 === 0 ? 'bg-gray-50' : ''}
+                          >
+                            <td className="border px-4 py-2">
+                              {subject.subjectName}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.cat1}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.cat2}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.midterm}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.final}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {subject.total}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {subject.average}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center font-bold">
+                              {subject.grade}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
