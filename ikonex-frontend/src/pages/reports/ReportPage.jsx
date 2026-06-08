@@ -69,44 +69,6 @@ const ReportPage = () => {
     }
   };
 
-  // const handleExportPDF = async () => {
-  //   if (!reportRef.current) return;
-
-  //   try {
-  //     const canvas = await html2canvas(reportRef.current, {
-  //       scale: 2,
-  //       logging: false
-  //     });
-  //     const imgData = canvas.toDataURL('image/png');
-  //     const pdf = new jsPDF({
-  //       orientation: 'landscape',
-  //       unit: 'mm',
-  //       format: 'a4'
-  //     });
-
-  //     const imgWidth = 280;
-  //     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  //     let heightLeft = imgHeight;
-  //     let position = 0;
-
-  //     pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-  //     heightLeft -= 280;
-
-  //     while (heightLeft >= 0) {
-  //       position = heightLeft - imgHeight;
-  //       pdf.addPage();
-  //       pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-  //       heightLeft -= 280;
-  //     }
-
-  //     const filename = `report_${reportType}_${new Date().getTime()}.pdf`;
-  //     pdf.save(filename);
-  //   } catch (err) {
-  //     console.error('Error exporting PDF:', err);
-  //     alert('Error exporting PDF');
-  //   }
-  // };
-
   const handleExportPDF = async () => {
     const element = reportRef.current;
 
@@ -138,6 +100,45 @@ const ReportPage = () => {
     label: `${s.firstName} ${s.lastName} (${s.admissionNumber})`,
     value: s.id.toString()
   }));
+
+  const getAssessmentScores = (scores = []) => {
+    
+    const getAssessmentType = (assessmentName) => {
+      const parts = assessmentName.split('-').map(p => p.trim());
+      // console.log('parts', parts);
+
+      return parts.length === 2
+        ? parts[1]
+        : parts[1] + "_TERM" ;
+    };
+
+    let obj = {
+      TERM_ONE: {
+        CAT_1: '-',
+        CAT_2: '-',
+        MID_TERM: '-',
+        END_TERM: '-'
+      },
+      TERM_TWO: {
+        CAT_1: '-',
+        CAT_2: '-',
+        MID_TERM: '-',
+        END_TERM: '-'
+      },
+      TERM_THREE: {
+        CAT_1: '-',
+        CAT_2: '-',
+        MID_TERM: '-',
+        END_TERM: '-'
+      }
+    };
+    
+    scores.forEach(score => {
+      obj[score.assessmentTerm][getAssessmentType(score.assessmentName).replace(' ', '_').toUpperCase()] = score.studentScore;
+    });
+    // console.log('Final assessments object', obj);
+    return obj;
+  };
 
   return (
     <Layout>
@@ -342,22 +343,109 @@ const ReportPage = () => {
 
                   <table className="w-full text-sm border-collapse">
                     <thead className="bg-gray-100">
-                      <tr>
-                        <th className="border px-4 py-2 text-left">Subject</th>
-                        <th className="border px-4 py-2 text-center">Total</th>
-                        <th className="border px-4 py-2 text-center">Average</th>
-                        <th className="border px-4 py-2 text-center">Grade</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {(reportData.subjects || []).map((subject, idx) => (
-                        <tr key={idx} className={idx % 2 === 0 ? 'bg-gray-50' : ''}>
-                          <td className="border px-4 py-2">{subject.subjectName}</td>
-                          <td className="border px-4 py-2 text-center">{subject.total}</td>
-                          <td className="border px-4 py-2 text-center">{subject.average}</td>
-                          <td className="border px-4 py-2 text-center font-bold">{subject.grade}</td>
+                        <tr>
+                          <th rowSpan="2" className="border px-4 py-2 text-left">Subject</th>
+
+                          <th colSpan="4" className="border px-4 py-2 text-center">Term 1</th>
+                          <th colSpan="4" className="border px-4 py-2 text-center">Term 2</th>
+                          <th colSpan="4" className="border px-4 py-2 text-center">Term 3</th>
+
+                          <th rowSpan="2" className="border px-4 py-2 text-center">Total</th>
+                          <th rowSpan="2" className="border px-4 py-2 text-center">Average</th>
+                          <th rowSpan="2" className="border px-4 py-2 text-center">Grade</th>
                         </tr>
-                      ))}
+
+                        <tr>
+                          <th className="border px-4 py-2 text-center">CAT 1</th>
+                          <th className="border px-4 py-2 text-center">CAT 2</th>
+                          <th className="border px-4 py-2 text-center">MID</th>
+                          <th className="border px-4 py-2 text-center">END</th>
+
+                          <th className="border px-4 py-2 text-center">CAT 1</th>
+                          <th className="border px-4 py-2 text-center">CAT 2</th>
+                          <th className="border px-4 py-2 text-center">MID</th>
+                          <th className="border px-4 py-2 text-center">END</th>
+
+                          <th className="border px-4 py-2 text-center">CAT 1</th>
+                          <th className="border px-4 py-2 text-center">CAT 2</th>
+                          <th className="border px-4 py-2 text-center">MID</th>
+                          <th className="border px-4 py-2 text-center">END</th>
+                        </tr>
+                      </thead>
+                    <tbody>
+                      {(reportData.subjects || []).map((subject, idx) => {
+                        const assessments = getAssessmentScores(subject.scores);
+                        console.log(`assessments for ${subject.subjectName}`, assessments);
+
+                        return (
+                          <tr
+                            key={idx}
+                            className={idx % 2 === 0 ? 'bg-gray-50' : ''}
+                          >
+                            <td className="border px-4 py-2">
+                              {subject.subjectName}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_ONE.CAT_1}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_ONE.CAT_2}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_ONE.MID_TERM}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_ONE.END_TERM}
+                            </td>
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_TWO.CAT_1}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_TWO.CAT_2}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_TWO.MID_TERM}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_TWO.END_TERM}
+                            </td>
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_THREE.CAT_1}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_THREE.CAT_2}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_THREE.MID_TERM}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {assessments.TERM_THREE.END_TERM}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {subject.total}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center">
+                              {subject.average}
+                            </td>
+
+                            <td className="border px-4 py-2 text-center font-bold">
+                              {subject.grade}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
