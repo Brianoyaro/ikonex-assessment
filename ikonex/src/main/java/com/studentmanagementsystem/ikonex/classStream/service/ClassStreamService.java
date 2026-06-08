@@ -183,7 +183,7 @@ public class ClassStreamService {
                     .build();
             classPositions.add(classPosition);
         });
-        classPositions.sort(Comparator.comparingDouble(ClassPosition::getClassAverage));
+        classPositions.sort(Comparator.comparingDouble(ClassPosition::getClassAverage).reversed());
         for (int i = 0; i <= classPositions.size() - 1; i++) {
             classPositions.get(i).setClassPosition(i + 1);
         }
@@ -212,7 +212,7 @@ public class ClassStreamService {
         });
 
         // sort the on student overallAverage and set their position
-        classStreamStudentResult.sort(Comparator.comparingDouble(StudentResult::getOverallAverage));
+        classStreamStudentResult.sort(Comparator.comparingDouble(StudentResult::getOverallAverage).reversed());
         for (int i = 0; i <= classStreamStudentResult.size() - 1; i++) {
             classStreamStudentResult.get(i).setStudentPosition(i + 1);
         }
