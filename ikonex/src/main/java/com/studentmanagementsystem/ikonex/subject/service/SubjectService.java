@@ -215,7 +215,7 @@ public class SubjectService {
             subjectPositions.add(subjectPosition);
         });
         // sort subjectPositions on classAverage and setClassSubjectPosition
-        subjectPositions.sort(Comparator.comparingDouble(SubjectPosition::getClassSubjectAverage));
+        subjectPositions.sort(Comparator.comparingDouble(SubjectPosition::getClassSubjectAverage).reversed());
         for (int i = 0; i <= subjectPositions.size() - 1; i++) {
             subjectPositions.get(i).setClassSubjectPosition(i + 1);
         }
