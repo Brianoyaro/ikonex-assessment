@@ -146,14 +146,22 @@ const ReportPage = () => {
       midterm: '-',
       final: '-'
     };
+    const getAssessmentType = (assessmentName) => {
+      const parts = assessmentName.split('-').map(p => p.trim());
+
+      return parts.length === 2
+        ? parts[1]
+        : parts.slice(1, -1).join('-');
+    };
 
     scores.forEach(score => {
-      const type = score.assessmentName
-        .split('-')
-        .pop()
-        .trim()
-        .toUpperCase();
-
+      const type = getAssessmentType(score.assessmentName).toUpperCase();
+      
+      // console.log('Processing score:', {
+      //   assessmentName: score.assessmentName,
+      //   type,
+      //   studentScore: score.studentScore
+      // });
       if (type === 'CAT 1') {
         result.cat1 = score.studentScore;
       } else if (type === 'CAT 2') {
