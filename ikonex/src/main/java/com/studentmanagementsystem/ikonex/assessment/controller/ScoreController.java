@@ -29,6 +29,10 @@ public class ScoreController {
             log.info("Inside createScore method");
             ScoreResponse scoreResponse = scoreService.createScore(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(scoreResponse);
+        } catch (RuntimeException e) {
+            HashMap<String, Object> response = new HashMap<>();
+            response.put("message", e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
         } catch (Exception e) {
             HashMap<String, Object>  response = new HashMap<>();
             response.put("message", e.getMessage());

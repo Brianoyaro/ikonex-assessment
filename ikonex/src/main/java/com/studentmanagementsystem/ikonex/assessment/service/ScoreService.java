@@ -43,6 +43,10 @@ public class ScoreService {
             Student student = studentRepo.findById(request.getStudentId())
                     .orElseThrow(() -> new RuntimeException("Student not found"));
 
+            if (request.getScore() > assessment.getTotalScore()) {
+                throw new RuntimeException("Student score can not be greater than assessment's total score");
+            }
+
             Score score = Score.builder()
                     .studentScore(request.getScore())
                     .classSubject(classSubject)
