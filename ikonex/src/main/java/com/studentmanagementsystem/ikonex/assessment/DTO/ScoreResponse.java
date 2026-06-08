@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ScoreResponse {
+    private Long id;
     private String assessment;
     private String subjectName;
     private Double score;

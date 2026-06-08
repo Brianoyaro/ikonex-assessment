@@ -28,7 +28,7 @@ const ReportPage = () => {
 
   const { data: assessments = [], execute: fetchAssessments } = useApi(assessmentAPI.getAll);
 
-  console.log(`assessments`, assessments);
+  // console.log(`assessments`, assessments);
 
   useEffect(() => {
     fetchClassStreams();
@@ -58,7 +58,7 @@ const ReportPage = () => {
       }
 
 
-      console.log('Report data:', data);
+      // console.log('Report data:', data);
 
 
       setReportData(data);
@@ -375,7 +375,7 @@ const ReportPage = () => {
                     <tbody>
                       {(reportData.subjects || []).map((subject, idx) => {
                         const assessments = getAssessmentScores(subject.scores);
-                        console.log(`assessments for ${subject.subjectName}`, assessments);
+                        // console.log(`assessments for ${subject.subjectName}`, assessments);
 
                         return (
                           <tr

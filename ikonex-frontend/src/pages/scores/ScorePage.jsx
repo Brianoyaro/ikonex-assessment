@@ -20,10 +20,17 @@ const ScorePage = () => {
   const { data: students, execute: fetchStudentsByStream } = useApi(studentAPI.getByStream);
   const { execute: createScore, isLoading: isSaving } = useApi(scoreAPI.create);
 
+  const {data: scoresData, execute: getAllScores} = useApi(scoreAPI.getAll);
+  const { execute: updateScore } = useApi(scoreAPI.update);
+
   useEffect(() => {
     fetchClassStreams();
     fetchAssessments();
+    getAllScores();
   }, []);
+  console.log('Class Streams:', classStreams);
+  console.log(`scoresData:`, scoresData);
+  console.log(`assessments:`, assessments);
 
   useEffect(() => {
     if (classStreamId) {
@@ -34,18 +41,51 @@ const ScorePage = () => {
 
   useEffect(() => {
     if (students && students.length > 0) {
+      console.log('Mapping scores for students:', students);
+      const selectedSubjectName = classSubjects?.find(cs => String(cs.id) === classSubjectId)?.name;
+      const selectedAssessmentName = assessments?.find(a => String(a.assessmentId) === assessmentId)?.assessmentName;
+      console.log('Selected Subject Name:', selectedSubjectName);
+      console.log('Selected Assessment Name:', selectedAssessmentName);
+      console.log( classSubjects?.find(cs => String(cs.id) === classSubjectId));
       setScores(
         students.map(student => ({
           studentId: student.id,
           studentName: `${student.firstName} ${student.lastName}`,
           admissionNumber: student.admissionNumber,
-          score: ''
+          score: scoresData.find(s => s.studentAdmissionNumber === student.admissionNumber && selectedSubjectName === s.subjectName && selectedAssessmentName === s.assessment)?.score || '',
+          maxScore: scoresData.find(s => s.studentAdmissionNumber === student.admissionNumber && selectedSubjectName === s.subjectName && selectedAssessmentName === s.assessment)?.maxScore || 100,
+          scoreId: scoresData.find(s => s.studentAdmissionNumber === student.admissionNumber && selectedSubjectName === s.subjectName && selectedAssessmentName === s.assessment)?.id || null,
         }))
       );
     } else {
       setScores([]);
     }
-  }, [students]);
+  }, [students, scoresData, classSubjectId, assessmentId, classSubjects, assessments]);
+  console.log('Scores after mapping:', scores);
+
+  const handleUpdateScore = (index) => {
+    const scoreToUpdate = scores[index];
+    // console.error('Attempting to update score for:', scoreToUpdate);
+    if (scoreToUpdate.score === '') {
+      setFormError('Score cannot be empty for update. Please enter a score before updating.');
+      return;
+    }
+    if (scoreToUpdate.score < 0 || scoreToUpdate.score > scoreToUpdate.maxScore) {
+      setFormError(`Score must be between 0 and ${scoreToUpdate.maxScore} for update.`);
+      return;
+    }
+    // I need studentId, assessmentId, score, classSubjectID
+    const updateData = {
+      studentId: scoreToUpdate.studentId,
+      classSubjectId: Number(classSubjectId),
+      assessmentId: Number(assessmentId),
+      score: Number(scoreToUpdate.score),
+    };
+    //
+    console.error(`Updating score with data: ${JSON.stringify(updateData)} and scoreId: ${scoreToUpdate.scoreId} typeof(scoreId): ${typeof scoreToUpdate.scoreId}`);
+    updateScore(Number(scoreToUpdate.scoreId), updateData);
+
+  }
 
   const handleScoreChange = (index, value) => {
     const newScores = [...scores];
@@ -60,9 +100,9 @@ const ScorePage = () => {
       return;
     }
 
-    const invalidScores = scores.filter((s) => s.score !== '' && (s.score < 0 || s.score > 100));
+    const invalidScores = scores.filter((s) => s.score !== '' && (s.score < 0 || s.score > s.maxScore));
     if (invalidScores.length > 0) {
-      setFormError('All scores must be between 0 and 100');
+      setFormError(`All scores must be between 0 and their respective maximum scores`);
       return;
     }
 
@@ -197,13 +237,16 @@ const ScorePage = () => {
                         <input
                           type="number"
                           min="0"
-                          max="100"
+                          max={item.maxScore}
                           step="0.5"
                           value={item.score}
                           onChange={(e) => handleScoreChange(idx, e.target.value)}
-                          placeholder="0-100"
+                          placeholder={`0-${item.maxScore}`}
                           className="w-20 px-3 py-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
                         />
+                      </td>
+                      <td>
+                        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700" onClick={() => handleUpdateScore(idx)}>Update</button>
                       </td>
                     </tr>
                   ))}

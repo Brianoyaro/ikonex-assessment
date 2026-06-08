@@ -64,11 +64,12 @@ public class ScoreService {
     // mapper
     private ScoreResponse mapper(Score score) {
         return ScoreResponse.builder()
+                .id(score.getId())
                 .score(score.getStudentScore())
                 .studentAdmissionNumber(score.getStudent().getAdmissionNumber())
                 .className(score.getClassSubject().getClassStream().getName())
                 .subjectName(score.getClassSubject().getSubject().getName())
-                .assessment(score.getAssessment().getAssessmentName() + score.getAssessment().getTerm() +  score.getAssessment().getYear())
+                .assessment(score.getAssessment().getAssessmentName())
                 .maxScore(score.getAssessment().getTotalScore())
                 .build();
     }
