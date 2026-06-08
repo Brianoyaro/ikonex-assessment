@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect } from 'react';
 import Layout from '../../components/layout/Layout';
 import FormSelect from '../../components/forms/FormSelect';
 import { useApi } from '../../hooks/useApi';
-import { classStreamAPI, subjectAPI, studentAPI } from '../../api';
+import { classStreamAPI, subjectAPI, studentAPI, assessmentAPI } from '../../api';
 import { FileText, Download } from 'lucide-react';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+
+import { toPng } from 'html-to-image';
 
 const ReportPage = () => {
   const [reportType, setReportType] = useState('class');
@@ -22,11 +24,17 @@ const ReportPage = () => {
   const { execute: fetchSubjectPosition } = useApi(subjectAPI.getSubjectPositionsByStream);
   const { execute: fetchStudentReport } = useApi(studentAPI.getResults);
 
+  // get all assessments and display them when student is selected i.e. in the student report card. This is to ensure we have the latest assessments in case new ones were added after the initial load of the page
+
+  const { data: assessments = [], execute: fetchAssessments } = useApi(assessmentAPI.getAll);
+
+  console.log(`assessments`, assessments);
+
   useEffect(() => {
     fetchClassStreams();
     fetchStudents();
+    fetchAssessments();
   }, []);
-
   const handleGenerateReport = async () => {
     setError('');
     if ((reportType === 'class' || reportType === 'subject') && !classStreamId) {
@@ -48,6 +56,11 @@ const ReportPage = () => {
       } else {
         data = await fetchStudentReport(studentId);
       }
+
+
+      console.log('Report data:', data);
+
+
       setReportData(data);
     } catch (err) {
       setError(err.response?.data?.message || 'Error generating report');
@@ -56,42 +69,64 @@ const ReportPage = () => {
     }
   };
 
-  const handleExportPDF = async () => {
-    if (!reportRef.current) return;
+  // const handleExportPDF = async () => {
+  //   if (!reportRef.current) return;
 
-    try {
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        logging: false
-      });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
+  //   try {
+  //     const canvas = await html2canvas(reportRef.current, {
+  //       scale: 2,
+  //       logging: false
+  //     });
+  //     const imgData = canvas.toDataURL('image/png');
+  //     const pdf = new jsPDF({
+  //       orientation: 'landscape',
+  //       unit: 'mm',
+  //       format: 'a4'
+  //     });
+
+  //     const imgWidth = 280;
+  //     const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  //     let heightLeft = imgHeight;
+  //     let position = 0;
+
+  //     pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
+  //     heightLeft -= 280;
+
+  //     while (heightLeft >= 0) {
+  //       position = heightLeft - imgHeight;
+  //       pdf.addPage();
+  //       pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
+  //       heightLeft -= 280;
+  //     }
+
+  //     const filename = `report_${reportType}_${new Date().getTime()}.pdf`;
+  //     pdf.save(filename);
+  //   } catch (err) {
+  //     console.error('Error exporting PDF:', err);
+  //     alert('Error exporting PDF');
+  //   }
+  // };
+
+  const handleExportPDF = async () => {
+    const element = reportRef.current;
+
+    const dataUrl = await toPng(element, {
+      pixelRatio: 2
+    });
+
+    // const pdf = new jsPDF('landscape', 'mm', 'a4');
+
+    const pdf = new jsPDF({
         orientation: 'landscape',
         unit: 'mm',
         format: 'a4'
       });
 
-      const imgWidth = 280;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
-      let position = 0;
+    pdf.addImage(dataUrl, 'PNG', 10, 10, 280, 0);
 
-      pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-      heightLeft -= 280;
-
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-        heightLeft -= 280;
-      }
-
-      const filename = `report_${reportType}_${new Date().getTime()}.pdf`;
-      pdf.save(filename);
-    } catch (err) {
-      console.error('Error exporting PDF:', err);
-      alert('Error exporting PDF');
-    }
+    // pdf.save('report.pdf');
+    const filename = `report_${reportType}_${new Date().getTime()}.pdf`;
+    pdf.save(filename);
   };
 
   const classStreamOptions = (Array.isArray(classStreams) ? classStreams : []).map(cs => ({
