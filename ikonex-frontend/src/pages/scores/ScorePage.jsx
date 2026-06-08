@@ -74,14 +74,20 @@ const ScorePage = () => {
 
     try {
       await Promise.all(
-        scoreRows.map((row) =>
-          createScore({
+        scoreRows.map((row) => {
+          console.log('Creating score for', {
             studentId: row.studentId,
             classSubjectId: Number(classSubjectId),
             assessmentId: Number(assessmentId),
             score: Number(row.score),
-          })
-        )
+          });
+          return createScore({
+            studentId: row.studentId,
+            classSubjectId: Number(classSubjectId),
+            assessmentId: Number(assessmentId),
+            score: Number(row.score),
+          });
+        })
       );
 
       setSuccessMessage('Scores saved successfully!');
@@ -102,8 +108,8 @@ const ScorePage = () => {
   }));
 
   const assessmentOptions = (Array.isArray(assessments) ? assessments : []).map((a) => ({
-    label: `${a.assessmentName} - ${a.assessmentType} (${a.totalScore} pts)`,
-    value: String(a.id)
+    label: `${a.assessmentName}`,
+    value: String(a.assessmentId)
   }));
 
   return (
